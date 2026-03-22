@@ -1,0 +1,468 @@
+{
+  "schema_version": 1,
+  "description": "Seed caption-eval set for perception backends. The benchmark rewards coverage of important distinctions such as medium, subject, color treatment, text, and composition, instead of comparing against a single reference caption.",
+  "images": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "reference_caption": "Wildlife photograph of two camelid-like animals interacting on a grassy plain with mountains blurred in the background.",
+      "notes": "Exact species is less important than recognizing this as a wildlife photograph with two llama/guanaco-like animals.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "wildlife photo"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "camelid pair",
+          "positives": ["guanaco", "llama", "camelid", "alpaca", "two animals", "pair of animals"],
+          "negatives": ["horse"]
+        },
+        {
+          "name": "scene",
+          "importance": "major",
+          "expected": "outdoor grassland with mountains",
+          "positives": ["grassland", "plain", "field", "mountains", "mountainous", "grass", "shrubs", "outdoors", "wild"],
+          "negatives": []
+        },
+        {
+          "name": "action",
+          "importance": "major",
+          "expected": "animal interaction",
+          "positives": ["interacting", "embracing", "climbing", "riding", "nursing", "hugging", "fight", "playful fight"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "reference_caption": "Aerial landscape photograph of several lakes beneath a dramatic stormy sky, with a mountain peak in the distance and a bright green foreground lake.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "landscape photo"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "lakes and mountain landscape",
+          "positives": ["lake", "lakes", "lagoon", "mountain", "landscape"],
+          "negatives": []
+        },
+        {
+          "name": "composition",
+          "importance": "critical",
+          "expected": "aerial viewpoint",
+          "positives": ["aerial", "drone", "overhead", "from above"],
+          "negatives": []
+        },
+        {
+          "name": "weather",
+          "importance": "major",
+          "expected": "stormy or dramatic sky",
+          "positives": ["storm", "stormy", "dramatic sky", "moody", "fog", "mist", "ominous", "dark clouds"],
+          "negatives": []
+        },
+        {
+          "name": "special_detail",
+          "importance": "major",
+          "expected": "bright green foreground lake",
+          "positives": ["green lake", "green water", "lime green", "green lagoon", "glowing green"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "6880.webp",
+      "reference_caption": "Close-up underwater photograph of an orange frogfish or anglerfish-like fish against a dark blue-black background.",
+      "notes": "Exact fish species is less important than recognizing an underwater close-up of a bright orange fish.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "underwater photo"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "underwater fish",
+          "positives": ["frogfish", "anglerfish", "fish", "underwater creature"],
+          "negatives": []
+        },
+        {
+          "name": "composition",
+          "importance": "major",
+          "expected": "close-up or macro view",
+          "positives": ["close up", "close-up", "macro", "portrait"],
+          "negatives": []
+        },
+        {
+          "name": "color_style",
+          "importance": "major",
+          "expected": "orange subject against dark blue or black water",
+          "positives": ["orange", "dark blue", "blue black", "dark water", "black background"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "NatGeo_ConestEntry_Final.avif",
+      "reference_caption": "Aerial photograph of a lake bordered by dense autumn forest in vivid orange, yellow, and red foliage.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "aerial photo"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "autumn forest and lake",
+          "positives": ["autumn forest", "fall foliage", "forest", "trees", "lake"],
+          "negatives": []
+        },
+        {
+          "name": "composition",
+          "importance": "critical",
+          "expected": "aerial viewpoint",
+          "positives": ["aerial", "drone", "overhead", "from above"],
+          "negatives": []
+        },
+        {
+          "name": "color_style",
+          "importance": "major",
+          "expected": "vivid fall colors",
+          "positives": ["orange", "yellow", "red", "fall colors", "autumn colors", "colorful foliage"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "Photo-3.jpg",
+      "reference_caption": "Fashion photograph of a woman in a flowing white dress posed outdoors in a desert garden among cacti and rocks, with a white fabric backdrop behind her.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "fashion photo", "portrait"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "woman or model",
+          "positives": ["woman", "female", "model", "portrait"],
+          "negatives": []
+        },
+        {
+          "name": "scene",
+          "importance": "critical",
+          "expected": "desert setting with cacti",
+          "positives": ["desert", "cactus", "cacti", "arid"],
+          "negatives": []
+        },
+        {
+          "name": "special_detail",
+          "importance": "major",
+          "expected": "white dress and white backdrop",
+          "positives": ["white dress", "flowing dress", "fabric backdrop", "sheet", "white backdrop"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "SS5_7144-Copy1-1024x684.jpg",
+      "reference_caption": "Black-and-white wedding photograph of a bride and groom moving quickly outdoors at night.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "wedding photo"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "color_style",
+          "importance": "critical",
+          "expected": "black and white",
+          "positives": ["black and white", "monochrome", "grayscale"],
+          "negatives": ["colorful", "vibrant colors"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "wedding couple",
+          "positives": ["bride", "groom", "wedding couple", "couple"],
+          "negatives": []
+        },
+        {
+          "name": "scene",
+          "importance": "major",
+          "expected": "nighttime motion outdoors",
+          "positives": ["running", "walking", "night", "nighttime", "outside", "outdoors"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "cIMvCx2rNg22bOVeGdqs--5--9HYHg.jpg",
+      "reference_caption": "Anime-style digital illustration of a young woman standing on a neon-lit city street at night, with pink and blue signage around her.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "importance": "critical",
+          "expected": "illustration",
+          "positives": ["illustration", "anime", "digital art", "cartoon", "drawing"],
+          "negatives": ["photograph", "photo", "photographic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "young woman in city street",
+          "positives": ["young woman", "girl", "female character", "woman"],
+          "negatives": []
+        },
+        {
+          "name": "scene",
+          "importance": "critical",
+          "expected": "neon city street at night",
+          "positives": ["city street", "street", "night", "neon", "signs", "japanese"],
+          "negatives": []
+        },
+        {
+          "name": "color_style",
+          "importance": "major",
+          "expected": "pink, purple, and blue neon palette",
+          "positives": ["pink", "purple", "blue", "neon"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "dKFCLXC6zw5p5ATokj6G--5--4vPkD.jpg",
+      "reference_caption": "Stylized cartoon rendering of vertical wooden planks used as an edge-to-edge texture, with warm orange-brown tones and visible wood grain.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "importance": "critical",
+          "expected": "illustration or rendered texture",
+          "positives": ["illustration", "cartoon", "render", "rendered", "stylized", "non photographic"],
+          "negatives": ["photograph", "photo", "photographic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "wood plank texture",
+          "positives": ["wood", "wooden planks", "wood texture", "planks", "wood grain"],
+          "negatives": []
+        },
+        {
+          "name": "special_detail",
+          "importance": "critical",
+          "expected": "edge-to-edge texture asset",
+          "positives": ["texture", "background", "pattern", "edge to edge", "full frame", "full-frame", "seamless"],
+          "negatives": []
+        },
+        {
+          "name": "color_style",
+          "importance": "major",
+          "expected": "warm orange-brown palette",
+          "positives": ["orange", "brown", "warm", "amber", "golden"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "hqdefault.jpg",
+      "reference_caption": "Black-and-white long-exposure seascape photograph featuring two rock sea stacks in calm water under a dramatic cloudy sky.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "seascape photo"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "color_style",
+          "importance": "critical",
+          "expected": "black and white",
+          "positives": ["black and white", "monochrome", "grayscale"],
+          "negatives": ["colorful", "vibrant colors"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "sea stacks or coastal rock formations",
+          "positives": ["sea stacks", "rock formations", "rocks", "ocean", "sea"],
+          "negatives": []
+        },
+        {
+          "name": "style",
+          "importance": "major",
+          "expected": "long-exposure or minimalist fine-art treatment",
+          "positives": ["long exposure", "minimalist", "calm water", "fine art"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "istockphoto-2182378061-612x612.jpg",
+      "reference_caption": "Blue-and-gold New Year graphic with large '2026' numerals and the words 'Happy New Year' in the center.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "importance": "critical",
+          "expected": "graphic design",
+          "positives": ["graphic", "graphic design", "poster", "banner", "illustration", "design"],
+          "negatives": ["photograph", "photo", "photographic"]
+        },
+        {
+          "name": "text",
+          "importance": "critical",
+          "expected": "prominent New Year text",
+          "positives": ["2026", "happy new year"],
+          "negatives": ["no text"]
+        },
+        {
+          "name": "color_style",
+          "importance": "critical",
+          "expected": "blue and gold palette",
+          "positives": ["blue and gold", "navy", "gold"],
+          "negatives": ["black and white"]
+        },
+        {
+          "name": "scene",
+          "importance": "major",
+          "expected": "festive celebratory layout",
+          "positives": ["festive", "celebration", "ornament", "sparkles", "new year"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "original.avif",
+      "reference_caption": "Wildlife photograph of a polar bear mother with two cubs inside a snowy ice cave.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "wildlife photo"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "polar bear family",
+          "positives": ["polar bear", "bears", "mother and cubs", "cub", "two cubs"],
+          "negatives": []
+        },
+        {
+          "name": "scene",
+          "importance": "critical",
+          "expected": "snow or ice cave",
+          "positives": ["snow cave", "ice cave", "den", "snow", "ice"],
+          "negatives": []
+        },
+        {
+          "name": "color_style",
+          "importance": "major",
+          "expected": "cool white and blue palette",
+          "positives": ["white", "blue", "icy"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "original.jpg",
+      "reference_caption": "Moody wildlife photograph of a fox-like canid standing in blowing snow, lit by streaks of light in a cool blue-green palette.",
+      "notes": "Exact species is flexible; fox, wolf, or canid-like wording should all count.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "wildlife photo"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "fox or canid",
+          "positives": ["fox", "wolf", "canid", "animal"],
+          "negatives": []
+        },
+        {
+          "name": "scene",
+          "importance": "critical",
+          "expected": "blowing snow or snowstorm",
+          "positives": ["snow", "snowstorm", "blowing snow", "spray", "wind"],
+          "negatives": []
+        },
+        {
+          "name": "color_style",
+          "importance": "major",
+          "expected": "dark cool moody palette",
+          "positives": ["dark", "moody", "blue", "teal", "low light"],
+          "negatives": []
+        }
+      ]
+    },
+    {
+      "filename": "pnQLd6EXBtFJgy2gDLaNQV.jpg",
+      "reference_caption": "Photograph of a woman using a large telephoto camera lens from a wooden hide or shelter, lit by warm side light.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "policy": "avoid_wrong",
+          "importance": "critical",
+          "expected": "photograph",
+          "positives": ["photograph", "photo", "portrait"],
+          "negatives": ["illustration", "cartoon", "painting", "render", "graphic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "woman with camera",
+          "positives": ["woman", "photographer", "camera", "telephoto lens", "long lens"],
+          "negatives": []
+        },
+        {
+          "name": "scene",
+          "importance": "major",
+          "expected": "wooden hide or shelter",
+          "positives": ["window", "wooden shelter", "hide", "indoors", "cabin"],
+          "negatives": []
+        },
+        {
+          "name": "lighting",
+          "importance": "major",
+          "expected": "warm side light",
+          "positives": ["sunlight", "side light", "light beam", "warm light"],
+          "negatives": []
+        }
+      ]
+    }
+  ]
+}

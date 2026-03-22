@@ -1,0 +1,13 @@
+{
+  "model": "blip-local:Salesforce/blip-image-captioning-base",
+  "predictions": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "caption": "a kangaroo jumping in the air"
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "caption": "aerial view of a lake in the mountains - aerial stock videos & royalty footage footage footage footage"
+    }
+  ]
+}

@@ -1,0 +1,57 @@
+{
+  "model": "florence-local:microsoft/Florence-2-large-ft:more-detailed-caption",
+  "predictions": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "caption": "a field. It is holding the neck of another brown and white animal. They are standing on top of dry grass. There is a mountain behind them."
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "caption": "yellow and green. There are mountains in the distance. There is a large cloud in the sky."
+    },
+    {
+      "filename": "6880.webp",
+      "caption": "blue and there are bubbles floating around the fish."
+    },
+    {
+      "filename": "NatGeo_ConestEntry_Final.avif",
+      "caption": "the foreground are a mix of green, orange, and red. There is a large body of water in the background."
+    },
+    {
+      "filename": "Photo-3.jpg",
+      "caption": "front of a white tent. There are cacti and rocks around her."
+    },
+    {
+      "filename": "SS5_7144-Copy1-1024x684.jpg",
+      "caption": "bride is wearing a long white gown. The groom is dressed in a black suit with a white flower pinned to his lapel. He has short dark hair. The couple is walking in front of a row of hedges. There are large windows behind the couple."
+    },
+    {
+      "filename": "cIMvCx2rNg22bOVeGdqs--5--9HYHg.jpg",
+      "caption": "street. She is wearing a blue coat. She has long black hair with bangs. The sky is dark and cloudy. There are many buildings on both sides of the girl. The buildings have signs on them that are in English and Chinese. People are walking on the street in front of the buildings."
+    },
+    {
+      "filename": "dKFCLXC6zw5p5ATokj6G--5--4vPkD.jpg",
+      "caption": "is light brown in color and has knots in it. The knots are circular in shape. There is a light stain on the wood. The image is drawn in a cartoon style."
+    },
+    {
+      "filename": "hqdefault.jpg",
+      "caption": "on one of the rocks. There are many clouds in the sky. The water is calm and still."
+    },
+    {
+      "filename": "istockphoto-2182378061-612x612.jpg",
+      "caption": "middle. Inside the circle is the number 2026 in golden letters. There is a gold string hanging from the top of the circle. There are small white dots on the dark background."
+    },
+    {
+      "filename": "original.avif",
+      "caption": "large white polar bear in the middle of the picture. There are two smaller polar bears on either side of the larger polar bear."
+    },
+    {
+      "filename": "original.jpg",
+      "caption": "standing on the ground. There is a large wave behind the cat."
+    },
+    {
+      "filename": "pnQLd6EXBtFJgy2gDLaNQV.jpg",
+      "caption": "She is holding a large camera in her hands. There is a wooden bench in front of her."
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+# Open WebUI Plugin — Python dependencies
+# These are lightweight — no inference frameworks.
+
+httpx>=0.25.0

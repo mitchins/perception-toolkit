@@ -1,0 +1,57 @@
+{
+  "model": "florence-local:microsoft/Florence-2-base-ft:more-detailed-caption",
+  "predictions": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "caption": "angaroo is white and the other is brown. They are standing on their hind legs. The ground is covered in brown grass. The sky is blue with white clouds."
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "caption": "in snow. The snow is light green. There is snow on the mountain. There are snow covered mountains in the background. The sky is dark and cloudy. The clouds are white and fluffy. The mountains are dark gray. The ice is light blue in color. The water is dark gray in the picture."
+    },
+    {
+      "filename": "6880.webp",
+      "caption": "jellyfish is orange. It has bubbles on its head. The bubbles are white. The water under the jellyfish looks blue. The background of the image is black. There are small white bubbles in the water. There is a small black dot in the center of the jelly fish."
+    },
+    {
+      "filename": "NatGeo_ConestEntry_Final.avif",
+      "caption": "the photo. Most of the trees are orange, yellow, and red. There is a body of water in the background. The water is calm."
+    },
+    {
+      "filename": "Photo-3.jpg",
+      "caption": "white structure. There are cacti and bushes around the woman."
+    },
+    {
+      "filename": "SS5_7144-Copy1-1024x684.jpg",
+      "caption": "bride is wearing a long white gown with a veil on her head. The groom is dressed in a black suit with a white flower on his lapel. They are standing in front of a building with large glass windows. There are hedges behind them."
+    },
+    {
+      "filename": "cIMvCx2rNg22bOVeGdqs--5--9HYHg.jpg",
+      "caption": "long dark brown hair and blue eyes. The sky is dark blue with white clouds. The buildings on either side of the girl have Chinese writing on them."
+    },
+    {
+      "filename": "dKFCLXC6zw5p5ATokj6G--5--4vPkD.jpg",
+      "caption": "light brown in color. There are several curves and bumps in the wood. The image is drawn in a cartoonish style."
+    },
+    {
+      "filename": "hqdefault.jpg",
+      "caption": "calm and still. The sky is cloudy and gray. There is a cross on one of the rocks."
+    },
+    {
+      "filename": "istockphoto-2182378061-612x612.jpg",
+      "caption": "The background of the image is dark blue and there are dots that are white. There is a gold circle in the middle that says happy new year. There are small gold stars around the circle. The numbers are in a gold color."
+    },
+    {
+      "filename": "original.avif",
+      "caption": "a large glacier behind them."
+    },
+    {
+      "filename": "original.jpg",
+      "caption": "There is a large wave in the water behind the cat. The cat is looking up at the sky."
+    },
+    {
+      "filename": "pnQLd6EXBtFJgy2gDLaNQV.jpg",
+      "caption": "large lens. The woman is wearing a hat. The hat is gray. The women is wearing long hair. There is a wooden fence next to the woman. There are trees behind the fence."
+    }
+  ]
+}

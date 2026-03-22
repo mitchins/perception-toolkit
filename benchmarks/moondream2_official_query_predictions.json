@@ -1,0 +1,57 @@
+{
+  "model": "moondream-local:vikhyatk/moondream2:official:query",
+  "predictions": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "caption": "The image depicts a lioness attacking a llama in a mountainous landscape. The scene is dynamic and captures the action of the predator."
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "caption": "This is a photograph of a landscape featuring two distinct lakes or lagoons, one with a light green hue and the other with a blue hue, nestled amidst dark, rugged terrain under a dramatic, stormy sky."
+    },
+    {
+      "filename": "6880.webp",
+      "caption": "This is a close-up photograph of a fish, likely an orange or reddish-brown species, partially submerged in dark blue water. The image features intricate details of the fish's scales, eyes, and mouth, highlighting the texture and coloration of the fish."
+    },
+    {
+      "filename": "NatGeo_ConestEntry_Final.avif",
+      "caption": "This is an aerial photograph of a vibrant autumn forest landscape featuring a river winding through it. The image highlights the dense foliage of trees in various shades of red, orange, yellow, and green, showcasing the changing seasons."
+    },
+    {
+      "filename": "Photo-3.jpg",
+      "caption": "The image is a photograph of a woman in a white dress standing in a desert landscape with cacti and desert plants."
+    },
+    {
+      "filename": "SS5_7144-Copy1-1024x684.jpg",
+      "caption": "The image is a black and white photograph of a bride and groom walking outdoors at night. The bride is wearing a long white dress and veil, and the groom is dressed in a tuxedo. They are walking in front of a building with large windows."
+    },
+    {
+      "filename": "cIMvCx2rNg22bOVeGdqs--5--9HYHg.jpg",
+      "caption": "The image depicts a young woman in a blue coat standing in a vibrant, nighttime cityscape with colorful neon signs and illuminated buildings."
+    },
+    {
+      "filename": "dKFCLXC6zw5p5ATokj6G--5--4vPkD.jpg",
+      "caption": "The image depicts a wooden surface with visible wood grain, knots, and variations in color. It appears to be a rendered texture or background asset."
+    },
+    {
+      "filename": "hqdefault.jpg",
+      "caption": "This is a black and white photograph of two rocky formations in the ocean, with a cross visible on one of them. The image captures the calm ocean surface and emphasizes the textures and contrasts of the rocks."
+    },
+    {
+      "filename": "istockphoto-2182378061-612x612.jpg",
+      "caption": "The image features the year 2026 prominently displayed in gold, stylized font against a dark blue background with gold confetti and streamers. The text \"HAPPY NEW YEAR\" is centered within the gold circle."
+    },
+    {
+      "filename": "original.avif",
+      "caption": "The image features two polar bears in an ice cave. The primary focus is on the adult bear and its cub, highlighting their white fur and resting position."
+    },
+    {
+      "filename": "original.jpg",
+      "caption": "The image is a photograph of a fox in a snowy environment at night."
+    },
+    {
+      "filename": "pnQLd6EXBtFJgy2gDLaNQV.jpg",
+      "caption": "The image shows a woman using a camera with a large telephoto lens, positioned in front of a wooden structure, possibly a shed or window frame. She is wearing a knitted hat and holding the camera with both hands, focusing her attention on the viewfinder."
+    }
+  ]
+}

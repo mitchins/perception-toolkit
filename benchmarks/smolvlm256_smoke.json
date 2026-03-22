@@ -1,0 +1,13 @@
+{
+  "model": "smolvlm-local:HuggingFaceTB/SmolVLM-256M-Instruct",
+  "predictions": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "caption": "1. Photograph: This image is an image of two animals, one on the right and the other on the left. The animal on the right is smaller and is in a fighting stance. The animal on the left is larger and is in a running pose. The background is blurred, and the animals are in the foreground."
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "caption": "Main subject: Outdoors.\n\nDecision-relevant distinctions:\n1. Outdoors: This is a natural outdoor scene, likely a landscape or a landscape scene.\n2. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n3. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n4. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n5. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n6. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n7. Outdoors: Outdoors is a natural outdoor scene, likely"
+    }
+  ]
+}

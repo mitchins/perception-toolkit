@@ -1,0 +1,57 @@
+{
+  "model": "blip-local:Salesforce/blip-image-captioning-base",
+  "predictions": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "caption": "a kangaroo jumping in the air"
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "caption": "aerial view of a lake in the mountains - aerial stock videos & royalty footage footage footage footage"
+    },
+    {
+      "filename": "6880.webp",
+      "caption": "a close up of a small orange object"
+    },
+    {
+      "filename": "NatGeo_ConestEntry_Final.avif",
+      "caption": "a lake surrounded by trees in the fall"
+    },
+    {
+      "filename": "Photo-3.jpg",
+      "caption": "a woman in a white dress standing in front of a cactus"
+    },
+    {
+      "filename": "SS5_7144-Copy1-1024x684.jpg",
+      "caption": "a bride and groom walking down the street at night"
+    },
+    {
+      "filename": "cIMvCx2rNg22bOVeGdqs--5--9HYHg.jpg",
+      "caption": "a woman in a city at night"
+    },
+    {
+      "filename": "dKFCLXC6zw5p5ATokj6G--5--4vPkD.jpg",
+      "caption": "wood texture background vector"
+    },
+    {
+      "filename": "hqdefault.jpg",
+      "caption": "a black and white photo of rocks in the ocean"
+    },
+    {
+      "filename": "istockphoto-2182378061-612x612.jpg",
+      "caption": "happy new year 2020 with golden numbers and coning on a dark blue background"
+    },
+    {
+      "filename": "original.avif",
+      "caption": "two polar bears sitting in the snow"
+    },
+    {
+      "filename": "original.jpg",
+      "caption": "a cat sitting on a rock in the snow"
+    },
+    {
+      "filename": "pnQLd6EXBtFJgy2gDLaNQV.jpg",
+      "caption": "a woman taking a picture with a camera"
+    }
+  ]
+}

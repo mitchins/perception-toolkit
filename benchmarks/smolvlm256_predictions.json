@@ -1,0 +1,57 @@
+{
+  "model": "smolvlm-local:HuggingFaceTB/SmolVLM-256M-Instruct",
+  "predictions": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "caption": "1. Photograph: This image is an image of two animals, one on the right and the other on the left. The animal on the right is smaller and is in a fighting stance. The animal on the left is larger and is in a running pose. The background is blurred, and the animals are in the foreground."
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "caption": "Main subject: Outdoors.\n\nDecision-relevant distinctions:\n1. Outdoors: This is a natural outdoor scene, likely a landscape or a landscape scene.\n2. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n3. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n4. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n5. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n6. Outdoors: Outdoors is a natural outdoor scene, likely a landscape or a landscape scene.\n7. Outdoors: Outdoors is a natural outdoor scene, likely"
+    },
+    {
+      "filename": "6880.webp",
+      "caption": "The most decision-relevant distinction is whether it is a photograph, illustration, render, texture/background asset, black-and-white vs color, visible text, main subject, or unusual style or composition."
+    },
+    {
+      "filename": "NatGeo_ConestEntry_Final.avif",
+      "caption": "The most decision-relevant distinctions are:\n- Photograph: This is a photograph of a forest.\n- Illustration: This is an illustration of a forest.\n- Texture/background: This is a texture or background of a forest.\n- Black-and-white: This is a texture or background of a forest.\n- Main subject: This is a main subject of a forest.\n- Unusual style or composition: This is an unusual style or composition of a forest."
+    },
+    {
+      "filename": "Photo-3.jpg",
+      "caption": "Photography, illustration, render, texture/background asset, black-and-white vs color, visible text, main subject."
+    },
+    {
+      "filename": "SS5_7144-Copy1-1024x684.jpg",
+      "caption": "The most decision-relevant distinction is whether it is a photograph, illustration, render, texture/background asset, black-and-white, or color."
+    },
+    {
+      "filename": "cIMvCx2rNg22bOVeGdqs--5--9HYHg.jpg",
+      "caption": "The most decision-relevant distinction is the style or composition. The image is a digital illustration of a cityscape at night. The main subject is a young woman with long dark hair, wearing a light blue jacket. She is standing in front of a building with many signs in Chinese characters, including some that read \"\u8d85\u914d\" (which translates to \"high-end\" or \"luxury\") and \"\u914d\u552e\" (which translates to \"delivery\"). The signs are illuminated with bright red lights, and the buildings have a modern, urban feel. The woman is looking slightly to her left, which might indicate that she is looking at something off-camera."
+    },
+    {
+      "filename": "dKFCLXC6zw5p5ATokj6G--5--4vPkD.jpg",
+      "caption": "The most decision-relevant distinction is whether it is a photograph, illustration, render, texture/background asset, black-and-white vs color, visible text, main subject, and unusual style or composition."
+    },
+    {
+      "filename": "hqdefault.jpg",
+      "caption": "The most decision-relevant distinctions are:\n- Photograph: This is the most important aspect of the image.\n- Illustration: This is the second most important aspect of the image.\n- Texture/background: This is the third most important aspect of the image.\n- Black-and-white: This is the least important aspect of the image.\n- Main subject: This is the most important aspect of the image.\n- Unusual style or composition: This is the least important aspect of the image."
+    },
+    {
+      "filename": "istockphoto-2182378061-612x612.jpg",
+      "caption": "The most decision-relevant distinction is whether it is a photograph, illustration, render, texture/background asset, black-and-white vs color, visible text, main subject, and unusual style or composition."
+    },
+    {
+      "filename": "original.avif",
+      "caption": "Photograph."
+    },
+    {
+      "filename": "original.jpg",
+      "caption": "The most decision-relevant distinction is whether it is a photograph, illustration, render, texture/background asset, black-and-white vs color, visible text, main subject, or unusual style or composition."
+    },
+    {
+      "filename": "pnQLd6EXBtFJgy2gDLaNQV.jpg",
+      "caption": "Photography."
+    }
+  ]
+}

@@ -1,0 +1,56 @@
+# ─────────────────────────────────────────────────────────────────────
+# Perception Sandbox — Docker Compose
+# ─────────────────────────────────────────────────────────────────────
+#
+# Runs Open WebUI + Perception Sidecar side by side.
+#
+# Usage:
+#   docker compose up --build
+#
+# The sidecar needs GPU access for Florence-2 inference.
+# On CPU-only machines, set PERCEPTION_FLORENCE_DEVICE=cpu.
+# ─────────────────────────────────────────────────────────────────────
+
+services:
+  # ── Open WebUI ────────────────────────────────────────────────────
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    ports:
+      - "3000:8080"
+    volumes:
+      - open-webui-data:/app/backend/data
+      # Mount plugin files into Open WebUI's functions directory
+      - ./openwebui/filter.py:/app/backend/data/functions/perception_filter.py:ro
+      - ./openwebui/tools.py:/app/backend/data/functions/perception_tools.py:ro
+    environment:
+      - PERCEPTION_SIDECAR_URL=http://perception-sidecar:8200
+    depends_on:
+      perception-sidecar:
+        condition: service_started
+    restart: unless-stopped
+
+  # ── Perception Sidecar ────────────────────────────────────────────
+  perception-sidecar:
+    build:
+      context: .
+      dockerfile: Dockerfile.sidecar
+    ports:
+      - "8200:8200"
+    volumes:
+      - perception-sandbox:/tmp/perception
+      - huggingface-cache:/root/.cache/huggingface
+    environment:
+      - PERCEPTION_FLORENCE_DEVICE=cuda:0
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+    restart: unless-stopped
+
+volumes:
+  open-webui-data:
+  perception-sandbox:
+  huggingface-cache:

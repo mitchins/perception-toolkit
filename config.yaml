@@ -1,0 +1,40 @@
+# ─────────────────────────────────────────────────────────────────────
+# Perception Sandbox — Sidecar Configuration
+# ─────────────────────────────────────────────────────────────────────
+#
+# This file configures the perception sidecar backends.
+# All heavy inference settings live here — not in Open WebUI.
+#
+# Override any value with environment variables:
+#   PERCEPTION_FLORENCE_ENABLED=true
+#   PERCEPTION_FLORENCE_MODEL_ID=microsoft/Florence-2-large
+#   PERCEPTION_FLORENCE_DEVICE=auto   # auto, mps, cpu, cuda:0, etc.
+#   PERCEPTION_WD14_ENABLED=true
+#   etc.
+# ─────────────────────────────────────────────────────────────────────
+
+backends:
+  florence:
+    enabled: true
+    model_id: microsoft/Florence-2-base
+    device: auto
+
+  wd14:
+    enabled: false
+    model_id: SmilingWolf/wd-v1-4-convnextv2
+    threshold_default: 0.35
+    device: auto
+
+  classifier:
+    enabled: false
+    model_path: /models/custom_classifier.onnx
+    threshold_default: 0.60
+    device: auto
+
+sandbox:
+  base_path: /tmp/perception
+  ttl_seconds: 3600
+
+# Sidecar server settings
+host: "0.0.0.0"
+port: 8200
