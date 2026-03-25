@@ -101,6 +101,66 @@ def _log_lookup_404(
     )
 
 
+def _resolve_attachment_for_request(
+    operation: str,
+    session_id: str,
+    turn_id: str,
+    logical_name: str,
+):
+    """Resolve an attachment path, with a safe single-attachment fallback."""
+    scope = get_scope(session_id, turn_id)
+    if scope is None:
+        _log_lookup_404(
+            operation,
+            session_id,
+            turn_id,
+            logical_name,
+            reason="scope_missing",
+        )
+        return None, None, ""
+
+    path = scope.resolve_path(logical_name)
+    if path is not None:
+        return scope, path, logical_name
+
+    attachments = scope.list_attachments()
+    if len(attachments) == 1:
+        fallback_name = attachments[0].logical_name
+        fallback_path = scope.resolve_path(fallback_name)
+        if fallback_path is not None:
+            log.warning(
+                "%s alias fallback: session=%s turn=%s requested_name=%s resolved_name=%s available=%s",
+                operation,
+                session_id,
+                turn_id,
+                logical_name,
+                fallback_name,
+                [item.logical_name for item in attachments],
+            )
+            return scope, fallback_path, fallback_name
+
+    _log_lookup_404(
+        operation,
+        session_id,
+        turn_id,
+        logical_name,
+        reason="attachment_missing",
+        scope=scope,
+    )
+    return scope, None, ""
+
+
+def _attach_resolution_note(text: str, requested_name: str, resolved_name: str) -> str:
+    """Annotate tool output when a generic requested name was remapped."""
+    if not resolved_name or resolved_name == requested_name:
+        return text
+    note = (
+        f"Note: requested attachment '{requested_name}' was not found; "
+        f"using the only available attachment '{resolved_name}' for this turn.\n\n"
+    )
+    return note + text
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     """Startup/shutdown lifecycle."""
@@ -449,27 +509,13 @@ async def inspect_image(req: InspectRequest):
     if req.intent != "ocr" and not florence.is_available():
         raise HTTPException(status_code=503, detail="Florence backend is not enabled.")
 
-    scope = get_scope(req.session_id, req.turn_id)
-    if scope is None:
-        _log_lookup_404(
-            "inspect_image",
-            req.session_id,
-            req.turn_id,
-            req.logical_name,
-            reason="scope_missing",
-        )
-        raise HTTPException(status_code=404, detail="No sandbox scope found for this session/turn.")
-
-    path = scope.resolve_path(req.logical_name)
+    _, path, resolved_name = _resolve_attachment_for_request(
+        "inspect_image",
+        req.session_id,
+        req.turn_id,
+        req.logical_name,
+    )
     if path is None:
-        _log_lookup_404(
-            "inspect_image",
-            req.session_id,
-            req.turn_id,
-            req.logical_name,
-            reason="attachment_missing",
-            scope=scope,
-        )
         raise HTTPException(
             status_code=404,
             detail=f"Attachment '{req.logical_name}' not found in sandbox.",
@@ -483,6 +529,7 @@ async def inspect_image(req: InspectRequest):
         else:
             result_text = florence.run_inference(path, req.intent, req.query)
             backend_used = "florence"
+        result_text = _attach_resolution_note(result_text, req.logical_name, resolved_name)
     except Exception as e:
         log.error(
             "inspect_image failed session=%s turn=%s name=%s intent=%s took_ms=%.1f error=%s",
@@ -507,7 +554,7 @@ async def inspect_image(req: InspectRequest):
     )
 
     return InspectResponse(
-        logical_name=req.logical_name,
+        logical_name=resolved_name or req.logical_name,
         intent=req.intent,
         result_text=result_text,
         backend_used=backend_used,
@@ -526,27 +573,13 @@ async def extract_text(req: OCRRequest):
             detail="OCR backend is not enabled. Enable it in config.yaml to use extract_text.",
         )
 
-    scope = get_scope(req.session_id, req.turn_id)
-    if scope is None:
-        _log_lookup_404(
-            "extract_text",
-            req.session_id,
-            req.turn_id,
-            req.logical_name,
-            reason="scope_missing",
-        )
-        raise HTTPException(status_code=404, detail="No sandbox scope found for this session/turn.")
-
-    path = scope.resolve_path(req.logical_name)
+    _, path, resolved_name = _resolve_attachment_for_request(
+        "extract_text",
+        req.session_id,
+        req.turn_id,
+        req.logical_name,
+    )
     if path is None:
-        _log_lookup_404(
-            "extract_text",
-            req.session_id,
-            req.turn_id,
-            req.logical_name,
-            reason="attachment_missing",
-            scope=scope,
-        )
         raise HTTPException(
             status_code=404,
             detail=f"Attachment '{req.logical_name}' not found in sandbox.",
@@ -567,6 +600,7 @@ async def extract_text(req: OCRRequest):
         raise HTTPException(status_code=500, detail=f"OCR error: {e}")
 
     display = ocr.format_text_for_llm(result["full_text"], result["lines"])
+    display = _attach_resolution_note(display, req.logical_name, resolved_name)
 
     log.info(
         "extract_text session=%s turn=%s name=%s lines=%d backend=rapidocr took_ms=%.1f",
@@ -578,7 +612,7 @@ async def extract_text(req: OCRRequest):
     )
 
     return OCRResponse(
-        logical_name=req.logical_name,
+        logical_name=resolved_name or req.logical_name,
         full_text=result["full_text"],
         lines=[OCRLineEntry(**line) for line in result["lines"]],
         display_text=display,
@@ -598,27 +632,13 @@ async def detect_objects(req: DetectRequest):
             detail="Detector backend is not enabled. Enable it in config.yaml to use detect_objects.",
         )
 
-    scope = get_scope(req.session_id, req.turn_id)
-    if scope is None:
-        _log_lookup_404(
-            "detect_objects",
-            req.session_id,
-            req.turn_id,
-            req.logical_name,
-            reason="scope_missing",
-        )
-        raise HTTPException(status_code=404, detail="No sandbox scope found for this session/turn.")
-
-    path = scope.resolve_path(req.logical_name)
+    _, path, resolved_name = _resolve_attachment_for_request(
+        "detect_objects",
+        req.session_id,
+        req.turn_id,
+        req.logical_name,
+    )
     if path is None:
-        _log_lookup_404(
-            "detect_objects",
-            req.session_id,
-            req.turn_id,
-            req.logical_name,
-            reason="attachment_missing",
-            scope=scope,
-        )
         raise HTTPException(
             status_code=404,
             detail=f"Attachment '{req.logical_name}' not found in sandbox.",
@@ -645,6 +665,7 @@ async def detect_objects(req: DetectRequest):
 
     grouped = detector.summarize_detections(detections)
     display = detector.format_detections_for_llm(grouped, detections)
+    display = _attach_resolution_note(display, req.logical_name, resolved_name)
 
     log.info(
         "detect_objects session=%s turn=%s name=%s grouped=%d detections=%d backend=detector took_ms=%.1f",
@@ -657,7 +678,7 @@ async def detect_objects(req: DetectRequest):
     )
 
     return DetectionResponse(
-        logical_name=req.logical_name,
+        logical_name=resolved_name or req.logical_name,
         object_counts=[DetectionCountEntry(**item) for item in grouped],
         detections=[DetectionEntry(**item) for item in detections],
         display_text=display,
@@ -677,27 +698,13 @@ async def tag_image(req: TagRequest):
             detail="Tagger backend is not enabled. Enable it in config.yaml to use tag_image.",
         )
 
-    scope = get_scope(req.session_id, req.turn_id)
-    if scope is None:
-        _log_lookup_404(
-            "tag_image",
-            req.session_id,
-            req.turn_id,
-            req.logical_name,
-            reason="scope_missing",
-        )
-        raise HTTPException(status_code=404, detail="No sandbox scope found for this session/turn.")
-
-    path = scope.resolve_path(req.logical_name)
+    _, path, resolved_name = _resolve_attachment_for_request(
+        "tag_image",
+        req.session_id,
+        req.turn_id,
+        req.logical_name,
+    )
     if path is None:
-        _log_lookup_404(
-            "tag_image",
-            req.session_id,
-            req.turn_id,
-            req.logical_name,
-            reason="attachment_missing",
-            scope=scope,
-        )
         raise HTTPException(
             status_code=404,
             detail=f"Attachment '{req.logical_name}' not found in sandbox.",
@@ -719,6 +726,7 @@ async def tag_image(req: TagRequest):
 
     tag_entries = [TagEntry(tag=t, confidence=c) for t, c in tags]
     display = tagger.format_tags_for_llm(tags)
+    display = _attach_resolution_note(display, req.logical_name, resolved_name)
 
     log.info(
         "tag_image session=%s turn=%s name=%s tags=%d took_ms=%.1f",
@@ -730,7 +738,7 @@ async def tag_image(req: TagRequest):
     )
 
     return TagResponse(
-        logical_name=req.logical_name,
+        logical_name=resolved_name or req.logical_name,
         tags=tag_entries,
         display_text=display,
     )
