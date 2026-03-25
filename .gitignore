@@ -2,3 +2,10 @@
 .hf_modules_cache/
 __pycache__/
 *.py[cod]
+.venv*/
+models/moondream/
+yolo11n.pt
+.vscode/
+
+#clone of openwebui
+open-webui/

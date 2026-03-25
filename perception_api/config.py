@@ -20,6 +20,9 @@ class FlorenceConfig:
     enabled: bool = True
     model_id: str = "microsoft/Florence-2-base"
     device: str = "auto"
+    general_task: str = "detailed"
+    max_new_tokens: int = 256
+    num_beams: int = 1
 
 
 @dataclass
@@ -27,6 +30,22 @@ class WD14Config:
     enabled: bool = False
     model_id: str = "SmilingWolf/wd-v1-4-convnextv2"
     threshold_default: float = 0.35
+    device: str = "auto"
+
+
+@dataclass
+class OCRConfig:
+    enabled: bool = True
+    score_threshold_default: float = 0.50
+
+
+@dataclass
+class DetectorConfig:
+    enabled: bool = False
+    model_id: str = "yolo11n.pt"
+    confidence_threshold_default: float = 0.35
+    iou_threshold_default: float = 0.45
+    max_detections: int = 50
     device: str = "auto"
 
 
@@ -48,6 +67,8 @@ class SandboxConfig:
 class PerceptionConfig:
     florence: FlorenceConfig = field(default_factory=FlorenceConfig)
     wd14: WD14Config = field(default_factory=WD14Config)
+    ocr: OCRConfig = field(default_factory=OCRConfig)
+    detector: DetectorConfig = field(default_factory=DetectorConfig)
     classifier: ClassifierConfig = field(default_factory=ClassifierConfig)
     sandbox: SandboxConfig = field(default_factory=SandboxConfig)
     host: str = "0.0.0.0"
@@ -62,6 +83,12 @@ def _merge_env_overrides(cfg: PerceptionConfig) -> None:
         cfg.florence.model_id = v
     if v := os.environ.get("PERCEPTION_FLORENCE_DEVICE"):
         cfg.florence.device = v
+    if v := os.environ.get("PERCEPTION_FLORENCE_GENERAL_TASK"):
+        cfg.florence.general_task = v
+    if v := os.environ.get("PERCEPTION_FLORENCE_MAX_NEW_TOKENS"):
+        cfg.florence.max_new_tokens = int(v)
+    if v := os.environ.get("PERCEPTION_FLORENCE_NUM_BEAMS"):
+        cfg.florence.num_beams = int(v)
 
     if v := os.environ.get("PERCEPTION_WD14_ENABLED"):
         cfg.wd14.enabled = v.lower() in ("1", "true", "yes")
@@ -71,6 +98,24 @@ def _merge_env_overrides(cfg: PerceptionConfig) -> None:
         cfg.wd14.threshold_default = float(v)
     if v := os.environ.get("PERCEPTION_WD14_DEVICE"):
         cfg.wd14.device = v
+
+    if v := os.environ.get("PERCEPTION_OCR_ENABLED"):
+        cfg.ocr.enabled = v.lower() in ("1", "true", "yes")
+    if v := os.environ.get("PERCEPTION_OCR_THRESHOLD"):
+        cfg.ocr.score_threshold_default = float(v)
+
+    if v := os.environ.get("PERCEPTION_DETECTOR_ENABLED"):
+        cfg.detector.enabled = v.lower() in ("1", "true", "yes")
+    if v := os.environ.get("PERCEPTION_DETECTOR_MODEL_ID"):
+        cfg.detector.model_id = v
+    if v := os.environ.get("PERCEPTION_DETECTOR_THRESHOLD"):
+        cfg.detector.confidence_threshold_default = float(v)
+    if v := os.environ.get("PERCEPTION_DETECTOR_IOU_THRESHOLD"):
+        cfg.detector.iou_threshold_default = float(v)
+    if v := os.environ.get("PERCEPTION_DETECTOR_MAX_DETECTIONS"):
+        cfg.detector.max_detections = int(v)
+    if v := os.environ.get("PERCEPTION_DETECTOR_DEVICE"):
+        cfg.detector.device = v
 
     if v := os.environ.get("PERCEPTION_CLASSIFIER_ENABLED"):
         cfg.classifier.enabled = v.lower() in ("1", "true", "yes")
@@ -95,6 +140,8 @@ def _dict_to_backend_config(section: str, data: dict[str, Any]) -> Any:
     mapping = {
         "florence": FlorenceConfig,
         "wd14": WD14Config,
+        "ocr": OCRConfig,
+        "detector": DetectorConfig,
         "classifier": ClassifierConfig,
     }
     cls = mapping.get(section)

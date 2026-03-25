@@ -10,6 +10,7 @@ from __future__ import annotations
 import logging
 import os
 from pathlib import Path
+from time import perf_counter
 from typing import Any
 
 from perception_api.config import FlorenceConfig, get_config
@@ -18,8 +19,13 @@ from perception_api.devices import preferred_dtype_for_device, resolve_torch_dev
 log = logging.getLogger(__name__)
 
 # Florence-2 task token mappings — internal only, never exposed to model
+_GENERAL_TASK_TOKENS: dict[str, str] = {
+    "caption": "<CAPTION>",
+    "detailed": "<DETAILED_CAPTION>",
+    "more_detailed": "<MORE_DETAILED_CAPTION>",
+}
+
 _INTENT_TO_TASKS: dict[str, list[str]] = {
-    "general": ["<MORE_DETAILED_CAPTION>"],
     "ocr": ["<OCR>"],
     "regions": ["<DENSE_REGION_CAPTION>"],
 }
@@ -37,6 +43,7 @@ def _load_model(cfg: FlorenceConfig) -> None:
     import torch
     from transformers import AutoModelForCausalLM, AutoProcessor
 
+    started = perf_counter()
     _device = resolve_torch_device(cfg.device, log)
     log.info("Loading Florence-2 model %s on %s ...", cfg.model_id, _device)
 
@@ -60,7 +67,10 @@ def _load_model(cfg: FlorenceConfig) -> None:
         trust_remote_code=True,
     )
 
-    log.info("Florence-2 model loaded successfully.")
+    log.info(
+        "Florence-2 model loaded successfully in %.2fs.",
+        perf_counter() - started,
+    )
 
 
 def is_available() -> bool:
@@ -93,44 +103,73 @@ def run_inference(image_path: Path, intent: str, query: str = "") -> str:
     from PIL import Image
 
     ensure_loaded()
+    cfg = get_config().florence
+    started = perf_counter()
 
-    tasks = _INTENT_TO_TASKS.get(intent)
+    tasks = _tasks_for_intent(intent, cfg.general_task)
     if not tasks:
         raise ValueError(f"Unknown intent: {intent}")
 
+    image_started = perf_counter()
     image = Image.open(image_path).convert("RGB")
+    image_ms = (perf_counter() - image_started) * 1000.0
     results: list[str] = []
 
     for task_token in tasks:
+        task_started = perf_counter()
         prompt = task_token
         if query and intent == "regions":
             prompt = f"{task_token} {query}"
 
+        processor_started = perf_counter()
         inputs = _processor(text=prompt, images=image, return_tensors="pt")
         inputs = _prepare_inputs(inputs)
+        processor_ms = (perf_counter() - processor_started) * 1000.0
 
+        generate_started = perf_counter()
         with torch.no_grad():
             generated_ids = _model.generate(
                 **inputs,
-                max_new_tokens=1024,
-                num_beams=3,
+                max_new_tokens=max(32, int(cfg.max_new_tokens)),
+                num_beams=max(1, int(cfg.num_beams)),
                 # Florence-2 custom code still trips over empty KV caches on
                 # newer transformers releases; disable caching for stability.
                 use_cache=False,
             )
+        generate_ms = (perf_counter() - generate_started) * 1000.0
 
         # Trim input tokens — post_process_generation expects only new tokens
+        decode_started = perf_counter()
         generated_ids_trimmed = generated_ids[:, inputs["input_ids"].shape[1]:]
         generated_text = _processor.batch_decode(generated_ids_trimmed, skip_special_tokens=False)[0]
         parsed = _processor.post_process_generation(
             generated_text, task=task_token, image_size=image.size
         )
+        decode_ms = (perf_counter() - decode_started) * 1000.0
 
         text = _format_parsed_output(task_token, parsed)
         if intent == "general":
             text = _annotate_general_caption(text)
         results.append(text)
 
+        log.info(
+            "Florence task=%s image=%s device=%s image_load_ms=%.1f processor_ms=%.1f generate_ms=%.1f decode_ms=%.1f total_ms=%.1f",
+            task_token,
+            image_path.name,
+            _device,
+            image_ms,
+            processor_ms,
+            generate_ms,
+            decode_ms,
+            (perf_counter() - task_started) * 1000.0,
+        )
+
+    log.info(
+        "Florence inference complete image=%s intent=%s total_ms=%.1f",
+        image_path.name,
+        intent,
+        (perf_counter() - started) * 1000.0,
+    )
     return "\n".join(results)
 
 
@@ -149,6 +188,15 @@ def _prepare_inputs(inputs: dict[str, Any]) -> dict[str, Any]:
         else:
             prepared[key] = value
     return prepared
+
+
+def _tasks_for_intent(intent: str, general_task: str) -> list[str] | None:
+    """Resolve high-level intent into Florence task tokens."""
+    if intent == "general":
+        task_name = (general_task or "detailed").strip().lower()
+        task_token = _GENERAL_TASK_TOKENS.get(task_name, _GENERAL_TASK_TOKENS["detailed"])
+        return [task_token]
+    return _INTENT_TO_TASKS.get(intent)
 
 
 def _format_parsed_output(task_token: str, parsed: Any) -> str:

@@ -18,11 +18,26 @@ backends:
     enabled: true
     model_id: microsoft/Florence-2-base
     device: auto
+    general_task: detailed
+    max_new_tokens: 256
+    num_beams: 1
 
   wd14:
     enabled: false
     model_id: SmilingWolf/wd-v1-4-convnextv2
     threshold_default: 0.35
+    device: auto
+
+  ocr:
+    enabled: true
+    score_threshold_default: 0.50
+
+  detector:
+    enabled: false
+    model_id: yolo11n.pt
+    confidence_threshold_default: 0.35
+    iou_threshold_default: 0.45
+    max_detections: 50
     device: auto
 
   classifier:

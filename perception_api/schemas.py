@@ -24,6 +24,22 @@ class TagRequest(BaseModel):
     threshold: float | None = None  # None → use backend default
 
 
+class DetectRequest(BaseModel):
+    session_id: str
+    turn_id: str
+    logical_name: str
+    threshold: float | None = None
+    iou_threshold: float | None = None
+    max_detections: int | None = None
+
+
+class OCRRequest(BaseModel):
+    session_id: str
+    turn_id: str
+    logical_name: str
+    threshold: float | None = None
+
+
 class StageRequest(BaseModel):
     session_id: str
     turn_id: str
@@ -38,6 +54,14 @@ class ListRequest(BaseModel):
 
 
 # ── Response schemas ──────────────────────────────────────────────────
+
+class CapabilityAction(BaseModel):
+    name: str
+    enabled: bool
+    description: str
+    recommended_for: list[str] = []
+    notes: str = ""
+
 
 class AttachmentInfo(BaseModel):
     logical_name: str
@@ -64,9 +88,49 @@ class TagEntry(BaseModel):
     confidence: float
 
 
+class DetectionEntry(BaseModel):
+    label: str
+    confidence: float
+    bbox: list[float]
+
+
+class DetectionCountEntry(BaseModel):
+    label: str
+    count: int
+    max_confidence: float
+
+
+class OCRLineEntry(BaseModel):
+    text: str
+    confidence: float
+    bbox: list[list[float]]
+
+
 class TagResponse(BaseModel):
     logical_name: str
     tags: list[TagEntry]
+    display_text: str
+
+
+class OCRResponse(BaseModel):
+    logical_name: str
+    full_text: str
+    lines: list[OCRLineEntry]
+    display_text: str
+    backend_used: str = ""
+
+
+class DetectionResponse(BaseModel):
+    logical_name: str
+    object_counts: list[DetectionCountEntry]
+    detections: list[DetectionEntry]
+    display_text: str
+    backend_used: str = ""
+
+
+class CapabilitiesResponse(BaseModel):
+    backend_status: dict[str, bool]
+    actions: list[CapabilityAction]
     display_text: str
 
 

@@ -1,0 +1,17 @@
+{
+  "model": "moondream-legacy:moondream-0_5b-int8.mf:query",
+  "predictions": [
+    {
+      "filename": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "caption": "None"
+    },
+    {
+      "filename": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "caption": "None"
+    },
+    {
+      "filename": "6880.webp",
+      "caption": "None"
+    }
+  ]
+}

@@ -57,12 +57,21 @@ DEFAULT_MODEL_IDS = {
     "blip-local": "Salesforce/blip-image-captioning-base",
     "smolvlm-local": "HuggingFaceTB/SmolVLM-256M-Instruct",
     "moondream-local": "vikhyatk/moondream2",
+    "moondream-package-local": "vikhyatk/moondream2",
     "clipcap-local": "Hamza66628/clip-prefix-caption-conceptual",
     "paligemma-local": "google/paligemma-3b-mix-448",
 }
 
 DEFAULT_MOONDREAM_QUERY_SETTINGS = {"max_tokens": 96, "temperature": 0.0, "top_p": 0.3}
 DEFAULT_MOONDREAM_CAPTION_SETTINGS = {"max_tokens": 96, "temperature": 0.0, "top_p": 0.3}
+DEFAULT_MOONDREAM_PACKAGE_SIZE = "0.5b"
+DEFAULT_MOONDREAM_PACKAGE_PRECISION = "int8"
+MOONDREAM_PACKAGE_CHECKPOINT_FILES = {
+    ("0.5b", "int8"): ("moondream-0_5b-int8.mf.gz", "moondream-0_5b-int8.bin.gz"),
+    ("0.5b", "int4"): ("moondream-0_5b-int4.mf.gz", "moondream-0_5b-int4.bin.gz"),
+    ("2b", "int8"): ("moondream-2b-int8.mf.gz", "moondream-2b-int8.bin.gz"),
+    ("2b", "int4"): ("moondream-2b-int4.mf.gz", "moondream-2b-int4.bin.gz"),
+}
 DEFAULT_PALIGEMMA_MAX_NEW_TOKENS = 96
 FLORENCE_TASK_TOKENS = {
     "caption": "<CAPTION>",
@@ -684,6 +693,7 @@ class MoondreamBackend:
         *,
         patched: bool,
         inference_mode: str,
+        compile_model: bool = False,
     ):
         from transformers import AutoModelForCausalLM
         import torch
@@ -692,6 +702,7 @@ class MoondreamBackend:
         self.device = resolve_torch_device(device)
         self.patched = patched
         self.inference_mode = inference_mode
+        self.compile_model = compile_model
         if patched:
             ensure_moondream_py39_dynamic_module(model_id)
         if self.device == "cpu":
@@ -720,6 +731,8 @@ class MoondreamBackend:
                 **model_kwargs,
             ).to(self.device).eval()
         patch_moondream_device_mixing(self.model)
+        if self.compile_model and hasattr(self.model, "compile"):
+            self.model.compile()
 
     def caption(self, image_path: Path) -> str:
         from PIL import Image
@@ -739,6 +752,62 @@ class MoondreamBackend:
             length=caption_length,
             settings=DEFAULT_MOONDREAM_CAPTION_SETTINGS,
         )
+        return str(result.get("caption", "")).strip()
+
+
+class MoondreamPackageBackend:
+    def __init__(
+        self,
+        model_id: str,
+        device: str,
+        *,
+        local_only: bool,
+        inference_mode: str,
+        package_size: str,
+        package_precision: str,
+    ):
+        import inspect
+
+        try:
+            import moondream as md
+        except ImportError as exc:
+            raise RuntimeError(
+                "The moondream package backend requires `pip install moondream`."
+            ) from exc
+
+        if "local" in inspect.signature(md.vl).parameters:
+            raise RuntimeError(
+                "The installed moondream package exposes the newer cloud/Photon client API, "
+                "not the older direct local-weight loader. The downloaded 0.5B `.mf.gz` files "
+                "cannot be used through this package version yet."
+            )
+
+        self.model_id = model_id
+        self.requested_device = device
+        self.device = "cpu"
+        self.inference_mode = inference_mode
+        self.package_size = package_size
+        self.package_precision = package_precision
+        checkpoint_files = MOONDREAM_PACKAGE_CHECKPOINT_FILES[(package_size, package_precision)]
+        checkpoint_path = resolve_checkpoint_path(
+            model_id,
+            checkpoint_files,
+            local_only=local_only,
+        )
+        self.checkpoint_path = checkpoint_path
+        self.model = md.vl(model=str(checkpoint_path))
+
+    def caption(self, image_path: Path) -> str:
+        from PIL import Image
+
+        image = Image.open(image_path).convert("RGB")
+        encoded_image = self.model.encode_image(image)
+        if self.inference_mode == "query":
+            result = self.model.query(encoded_image, MOONDREAM_SALIENCE_PROMPT)
+            return str(result.get("answer", "")).strip()
+
+        caption_length = self.inference_mode.removeprefix("caption-")
+        result = self.model.caption(encoded_image, length=caption_length)
         return str(result.get("caption", "")).strip()
 
 
@@ -808,6 +877,16 @@ def build_backend(args: argparse.Namespace):
             device=args.device,
             patched=args.moondream_loader == "patched",
             inference_mode=args.moondream_mode,
+            compile_model=args.moondream_compile,
+        )
+    if args.backend == "moondream-package-local":
+        return MoondreamPackageBackend(
+            model_id=model_id,
+            device=args.device,
+            local_only=args.offline,
+            inference_mode=args.moondream_mode,
+            package_size=args.moondream_package_size,
+            package_precision=args.moondream_package_precision,
         )
     raise ValueError(f"Unsupported backend: {args.backend}")
 
@@ -1035,7 +1114,15 @@ def main() -> int:
     )
     parser.add_argument(
         "--backend",
-        choices=["florence-local", "blip-local", "clipcap-local", "paligemma-local", "smolvlm-local", "moondream-local"],
+        choices=[
+            "florence-local",
+            "blip-local",
+            "clipcap-local",
+            "paligemma-local",
+            "smolvlm-local",
+            "moondream-local",
+            "moondream-package-local",
+        ],
         help="Generate captions with a local backend instead of loading a predictions file.",
     )
     parser.add_argument(
@@ -1069,6 +1156,23 @@ def main() -> int:
         choices=["query", "caption-short", "caption-normal", "caption-long"],
         default="query",
         help="Which Moondream API to benchmark.",
+    )
+    parser.add_argument(
+        "--moondream-compile",
+        action="store_true",
+        help="Call model.compile() after loading Moondream.",
+    )
+    parser.add_argument(
+        "--moondream-package-size",
+        choices=["0.5b", "2b"],
+        default=DEFAULT_MOONDREAM_PACKAGE_SIZE,
+        help="Checkpoint family for the optional moondream package backend.",
+    )
+    parser.add_argument(
+        "--moondream-package-precision",
+        choices=["int8", "int4"],
+        default=DEFAULT_MOONDREAM_PACKAGE_PRECISION,
+        help="Quantization for the optional moondream package backend.",
     )
     parser.add_argument(
         "--clipcap-prefix-length",
@@ -1188,6 +1292,13 @@ def main() -> int:
             model_name = f"{model_name}:{args.florence_task}"
         elif args.backend == "moondream-local":
             model_name = f"{model_name}:{args.moondream_loader}:{args.moondream_mode}"
+            if args.moondream_compile:
+                model_name = f"{model_name}:compiled"
+        elif args.backend == "moondream-package-local":
+            model_name = (
+                f"{model_name}:{args.moondream_package_size}:{args.moondream_package_precision}:"
+                f"{args.moondream_mode}:package"
+            )
         elif args.backend == "paligemma-local":
             model_name = f"{model_name}:{args.paligemma_mode}"
         predictions = {}

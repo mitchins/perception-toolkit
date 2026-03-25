@@ -463,6 +463,48 @@
           "negatives": []
         }
       ]
+    },
+    {
+      "filename": "canvas.png",
+      "reference_caption": "Pixel-art sprite of an anthropomorphic monkey character wearing a coconut-style bra top and a green grass skirt, standing on grass against a simple blue-sky background.",
+      "notes": "This image is meant to catch non-photographic sprite handling and attire drift such as calling the coconut top a shirt.",
+      "dimensions": [
+        {
+          "name": "medium",
+          "importance": "critical",
+          "expected": "pixel-art sprite or game-style illustration",
+          "positives": ["pixel art", "pixelated", "sprite", "game character", "graphic", "illustration"],
+          "negatives": ["photograph", "photo", "photographic"]
+        },
+        {
+          "name": "subject",
+          "importance": "critical",
+          "expected": "monkey character",
+          "positives": ["monkey", "ape", "primate"],
+          "negatives": ["bird", "chicken"]
+        },
+        {
+          "name": "upper_attire",
+          "importance": "critical",
+          "expected": "coconut-style bra or bikini top",
+          "positives": ["coconut bra", "coconut top", "bra", "bikini top"],
+          "negatives": ["shirt", "collar", "jacket"]
+        },
+        {
+          "name": "lower_attire",
+          "importance": "major",
+          "expected": "green grass skirt",
+          "positives": ["skirt", "grass skirt", "green skirt", "coconut skirt"],
+          "negatives": ["shorts", "pants"]
+        },
+        {
+          "name": "scene",
+          "importance": "major",
+          "expected": "simple grassy ground with blue sky background",
+          "positives": ["grass", "grassy", "blue sky", "sky", "background"],
+          "negatives": []
+        }
+      ]
     }
   ]
 }
