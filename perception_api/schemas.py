@@ -129,6 +129,7 @@ class DetectionResponse(BaseModel):
 
 
 class CapabilitiesResponse(BaseModel):
+    api_schema_version: str = ""
     backend_status: dict[str, bool]
     actions: list[CapabilityAction]
     display_text: str
@@ -136,6 +137,7 @@ class CapabilitiesResponse(BaseModel):
 
 class HealthResponse(BaseModel):
     status: str = "ok"
+    api_schema_version: str = ""
     backends: dict[str, bool] = {}
 
 

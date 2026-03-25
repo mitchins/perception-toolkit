@@ -48,6 +48,7 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
 )
 log = logging.getLogger("perception_api")
+API_SCHEMA_VERSION = "perception-sidecar-2026-03-25"
 
 
 def _ms(start: float) -> float:
@@ -103,6 +104,7 @@ async def health():
     cfg = get_config()
     return HealthResponse(
         status="ok",
+        api_schema_version=API_SCHEMA_VERSION,
         backends={
             "florence": cfg.florence.enabled,
             "ocr": cfg.ocr.enabled,
@@ -260,6 +262,7 @@ async def capabilities():
     ]
     display_lines = [
         "Perception capabilities available right now:",
+        f"- schema_version: {API_SCHEMA_VERSION}",
         *[
             f"- {action.name}: {'enabled' if action.enabled else 'disabled'} — {action.description}"
             for action in actions
@@ -272,6 +275,7 @@ async def capabilities():
         "- Use detect_objects(...) when the user asks how many people, cars, pizzas, or other common detector categories are present.",
     ]
     return CapabilitiesResponse(
+        api_schema_version=API_SCHEMA_VERSION,
         backend_status=backend_status,
         actions=actions,
         display_text="\n".join(display_lines),

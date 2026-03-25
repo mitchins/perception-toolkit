@@ -28,6 +28,7 @@ log.setLevel(logging.INFO)
 
 SIDECAR_URL = os.environ.get("PERCEPTION_SIDECAR_URL", "http://localhost:8200")
 WEBUI_URL = os.environ.get("OPENWEBUI_BASE_URL", "http://localhost:8080")
+EXPECTED_SIDECAR_SCHEMA = "perception-sidecar-2026-03-25"
 
 
 class Tools:
@@ -66,7 +67,21 @@ class Tools:
                 resp = await client.get(f"{self.valves.sidecar_url}/capabilities")
                 if resp.status_code == 200:
                     data = resp.json()
-                    return data.get("display_text", "No capability summary returned.")
+                    display_text = data.get("display_text", "No capability summary returned.")
+                    schema_version = data.get("api_schema_version", "")
+                    if schema_version:
+                        if schema_version != EXPECTED_SIDECAR_SCHEMA:
+                            return (
+                                f"{display_text}\n"
+                                f"Compatibility warning: tool expects schema {EXPECTED_SIDECAR_SCHEMA}, "
+                                f"but sidecar reports {schema_version}."
+                            )
+                        return f"{display_text}\nSchema version: {schema_version}"
+                    return (
+                        f"{display_text}\n"
+                        "Compatibility note: sidecar did not report an API schema version. "
+                        "It may be an older revision."
+                    )
                 return f"Error fetching perception capabilities: {resp.status_code}"
         except httpx.RequestError as e:
             log.error("Sidecar request failed: %s", e)
@@ -343,7 +358,13 @@ class Tools:
                     )
                     if legacy_resp.status_code == 200:
                         legacy_data = legacy_resp.json()
-                        return legacy_data.get("result_text", "No OCR result returned.")
+                        legacy_result = legacy_data.get("result_text", "No OCR result returned.")
+                        return (
+                            "Compatibility warning: connected sidecar does not expose the /ocr route "
+                            f"expected by tool schema {EXPECTED_SIDECAR_SCHEMA}; falling back to legacy "
+                            "OCR via /inspect. Update the sidecar and re-import the tool/filter files.\n\n"
+                            f"{legacy_result}"
+                        )
                     if legacy_resp.status_code == 404:
                         return f"Attachment '{name}' not found in the sandbox. Use list_attachments() to see available files."
                     if legacy_resp.status_code == 503:
