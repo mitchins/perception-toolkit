@@ -238,6 +238,9 @@ async def config_summary():
         "ocr": {
             "enabled": cfg.ocr.enabled,
             "score_threshold_default": cfg.ocr.score_threshold_default,
+            "det_lang": cfg.ocr.det_lang,
+            "rec_lang": cfg.ocr.rec_lang,
+            "rec_version": cfg.ocr.rec_version,
         },
         "classifier": {
             "enabled": cfg.classifier.enabled,
@@ -319,7 +322,9 @@ async def capabilities():
             description="Extract visible text from an image.",
             recommended_for=["OCR", "read labels", "read signs", "read UI text"],
             notes=(
-                f"Uses RapidOCR with default threshold {cfg.ocr.score_threshold_default:.2f}."
+                f"Uses RapidOCR with default threshold {cfg.ocr.score_threshold_default:.2f}, "
+                f"detection language {cfg.ocr.det_lang}, recognition language {cfg.ocr.rec_lang}, "
+                f"recognition model line {cfg.ocr.rec_version}."
                 if cfg.ocr.enabled
                 else "Falls back to the Florence backend when RapidOCR is disabled."
             ),
@@ -337,7 +342,9 @@ async def capabilities():
             description="Extract visible text with OCR and return line boxes and confidences.",
             recommended_for=["OCR", "read labels", "read signs", "UI text", "receipts", "menus"],
             notes=(
-                f"Uses RapidOCR with default threshold {cfg.ocr.score_threshold_default:.2f}."
+                f"Uses RapidOCR with default threshold {cfg.ocr.score_threshold_default:.2f}, "
+                f"detection language {cfg.ocr.det_lang}, recognition language {cfg.ocr.rec_lang}, "
+                f"recognition model line {cfg.ocr.rec_version}."
                 if cfg.ocr.enabled
                 else "Disabled because the OCR backend is off."
             ),

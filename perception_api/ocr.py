@@ -37,11 +37,25 @@ def ensure_loaded() -> None:
         raise RuntimeError("OCR backend is disabled in configuration.")
 
     try:
-        from rapidocr import RapidOCR
+        from rapidocr import LangDet, LangRec, OCRVersion, RapidOCR
+        import onnxruntime as ort
 
         started = perf_counter()
+        params = {
+            "Det.lang_type": _parse_enum(LangDet, cfg.det_lang, "ocr.det_lang"),
+            "Rec.lang_type": _parse_enum(LangRec, cfg.rec_lang, "ocr.rec_lang"),
+            "Rec.ocr_version": _parse_enum(OCRVersion, cfg.rec_version, "ocr.rec_version"),
+        }
+        providers = ort.get_available_providers()
         log.info("Loading RapidOCR engine ...")
-        _engine = RapidOCR()
+        log.info(
+            "RapidOCR config det_lang=%s rec_lang=%s rec_version=%s providers=%s",
+            cfg.det_lang,
+            cfg.rec_lang,
+            cfg.rec_version,
+            providers,
+        )
+        _engine = RapidOCR(params=params)
         _loaded = True
         log.info("RapidOCR engine loaded successfully in %.2fs.", perf_counter() - started)
     except Exception as e:
@@ -147,3 +161,12 @@ def _normalize_box(box: Any) -> list[list[float]]:
 
 def _clamp_threshold(value: float) -> float:
     return max(0.0, min(1.0, float(value)))
+
+
+def _parse_enum(enum_cls, raw_value: str, field_name: str):
+    """Convert a config string into the enum type RapidOCR expects."""
+    try:
+        return enum_cls(raw_value)
+    except ValueError as e:
+        allowed = ", ".join(item.value for item in enum_cls)
+        raise ValueError(f"Invalid {field_name} '{raw_value}'. Allowed values: {allowed}") from e

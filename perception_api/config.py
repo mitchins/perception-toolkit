@@ -37,6 +37,9 @@ class WD14Config:
 class OCRConfig:
     enabled: bool = True
     score_threshold_default: float = 0.50
+    det_lang: str = "multi"
+    rec_lang: str = "ch"
+    rec_version: str = "PP-OCRv5"
 
 
 @dataclass
@@ -103,6 +106,12 @@ def _merge_env_overrides(cfg: PerceptionConfig) -> None:
         cfg.ocr.enabled = v.lower() in ("1", "true", "yes")
     if v := os.environ.get("PERCEPTION_OCR_THRESHOLD"):
         cfg.ocr.score_threshold_default = float(v)
+    if v := os.environ.get("PERCEPTION_OCR_DET_LANG"):
+        cfg.ocr.det_lang = v
+    if v := os.environ.get("PERCEPTION_OCR_REC_LANG"):
+        cfg.ocr.rec_lang = v
+    if v := os.environ.get("PERCEPTION_OCR_REC_VERSION"):
+        cfg.ocr.rec_version = v
 
     if v := os.environ.get("PERCEPTION_DETECTOR_ENABLED"):
         cfg.detector.enabled = v.lower() in ("1", "true", "yes")

@@ -31,6 +31,9 @@ backends:
   ocr:
     enabled: true
     score_threshold_default: 0.50
+    det_lang: multi
+    rec_lang: ch
+    rec_version: PP-OCRv5
 
   detector:
     enabled: false
