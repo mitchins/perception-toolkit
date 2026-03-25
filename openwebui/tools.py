@@ -329,7 +329,31 @@ class Tools:
                     data = resp.json()
                     return data.get("display_text", "No OCR result returned.")
                 elif resp.status_code == 404:
-                    return f"Attachment '{name}' not found in the sandbox. Use list_attachments() to see available files."
+                    # Backward compatibility: older sidecars routed OCR through
+                    # /inspect with intent="ocr" and did not expose /ocr yet.
+                    legacy_resp = await client.post(
+                        f"{self.valves.sidecar_url}/inspect",
+                        json={
+                            "session_id": session_id,
+                            "turn_id": turn_id,
+                            "logical_name": name,
+                            "intent": "ocr",
+                            "query": "",
+                        },
+                    )
+                    if legacy_resp.status_code == 200:
+                        legacy_data = legacy_resp.json()
+                        return legacy_data.get("result_text", "No OCR result returned.")
+                    if legacy_resp.status_code == 404:
+                        return f"Attachment '{name}' not found in the sandbox. Use list_attachments() to see available files."
+                    if legacy_resp.status_code == 503:
+                        return "The OCR backend is not available. Enable it in the sidecar config to use extract_text."
+                    legacy_detail = (
+                        legacy_resp.json().get("detail", legacy_resp.text)
+                        if legacy_resp.headers.get("content-type", "").startswith("application/json")
+                        else legacy_resp.text
+                    )
+                    return f"OCR failed ({legacy_resp.status_code}): {legacy_detail}"
                 elif resp.status_code == 503:
                     return "The OCR backend is not available. Enable it in the sidecar config to use extract_text."
                 else:
