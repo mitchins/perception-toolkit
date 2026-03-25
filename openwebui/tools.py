@@ -103,25 +103,21 @@ class Tools:
         :param scope: Scope of attachments to list. Currently only "turn" is supported.
         :return: Text listing of available attachments.
         """
-        session_id, turn_id = _extract_scope(__metadata__)
-        used_fallback_scope = False
-        if not session_id or not turn_id:
-            used_fallback_scope = True
-            session_id, turn_id = _derive_scope(__metadata__, __chat_id__, __message_id__)
-            await _ensure_inline_images_staged(
-                self.valves.sidecar_url,
-                self.valves.webui_url,
-                session_id,
-                turn_id,
-                __messages__,
-            )
+        session_id, turn_id, scope_source = await _resolve_tool_scope(
+            self.valves.sidecar_url,
+            self.valves.webui_url,
+            __metadata__,
+            __chat_id__,
+            __message_id__,
+            __messages__,
+        )
         if not session_id or not turn_id:
             return "No perception sandbox is active for this turn. No attachments are available."
         log.info(
             "Perception tools list_attachments called: session=%s turn=%s scope_source=%s",
             session_id,
             turn_id,
-            "fallback" if used_fallback_scope else "metadata",
+            scope_source,
         )
 
         try:
@@ -162,18 +158,15 @@ class Tools:
         :param query: Optional query for region-based analysis (used with intent="regions").
         :return: Textual analysis result from the perception backend.
         """
-        session_id, turn_id = _extract_scope(__metadata__)
-        used_fallback_scope = False
-        if not session_id or not turn_id:
-            used_fallback_scope = True
-            session_id, turn_id = _derive_scope(__metadata__, __chat_id__, __message_id__)
-            await _ensure_inline_images_staged(
-                self.valves.sidecar_url,
-                self.valves.webui_url,
-                session_id,
-                turn_id,
-                __messages__,
-            )
+        session_id, turn_id, scope_source = await _resolve_tool_scope(
+            self.valves.sidecar_url,
+            self.valves.webui_url,
+            __metadata__,
+            __chat_id__,
+            __message_id__,
+            __messages__,
+            logical_name=name,
+        )
         if not session_id or not turn_id:
             return "No perception sandbox is active. Cannot inspect image."
 
@@ -185,7 +178,7 @@ class Tools:
             intent,
             session_id,
             turn_id,
-            "fallback" if used_fallback_scope else "metadata",
+            scope_source,
         )
 
         try:
@@ -236,18 +229,15 @@ class Tools:
         :param max_detections: Optional cap on returned detections.
         :return: Textual detector result from the perception backend.
         """
-        session_id, turn_id = _extract_scope(__metadata__)
-        used_fallback_scope = False
-        if not session_id or not turn_id:
-            used_fallback_scope = True
-            session_id, turn_id = _derive_scope(__metadata__, __chat_id__, __message_id__)
-            await _ensure_inline_images_staged(
-                self.valves.sidecar_url,
-                self.valves.webui_url,
-                session_id,
-                turn_id,
-                __messages__,
-            )
+        session_id, turn_id, scope_source = await _resolve_tool_scope(
+            self.valves.sidecar_url,
+            self.valves.webui_url,
+            __metadata__,
+            __chat_id__,
+            __message_id__,
+            __messages__,
+            logical_name=name,
+        )
         if not session_id or not turn_id:
             return "No perception sandbox is active. Cannot detect objects."
 
@@ -256,7 +246,7 @@ class Tools:
             name,
             session_id,
             turn_id,
-            "fallback" if used_fallback_scope else "metadata",
+            scope_source,
         )
 
         try:
@@ -306,18 +296,15 @@ class Tools:
         :param threshold: Optional OCR confidence threshold override.
         :return: Textual OCR result from the perception backend.
         """
-        session_id, turn_id = _extract_scope(__metadata__)
-        used_fallback_scope = False
-        if not session_id or not turn_id:
-            used_fallback_scope = True
-            session_id, turn_id = _derive_scope(__metadata__, __chat_id__, __message_id__)
-            await _ensure_inline_images_staged(
-                self.valves.sidecar_url,
-                self.valves.webui_url,
-                session_id,
-                turn_id,
-                __messages__,
-            )
+        session_id, turn_id, scope_source = await _resolve_tool_scope(
+            self.valves.sidecar_url,
+            self.valves.webui_url,
+            __metadata__,
+            __chat_id__,
+            __message_id__,
+            __messages__,
+            logical_name=name,
+        )
         if not session_id or not turn_id:
             return "No perception sandbox is active. Cannot extract text."
 
@@ -326,7 +313,7 @@ class Tools:
             name,
             session_id,
             turn_id,
-            "fallback" if used_fallback_scope else "metadata",
+            scope_source,
         )
 
         try:
@@ -413,6 +400,66 @@ def _derive_scope(
         or metadata.get("session_id", "")
     )
     return session_id, turn_id
+
+
+async def _resolve_tool_scope(
+    sidecar_url: str,
+    webui_url: str,
+    metadata: dict[str, Any] | None,
+    chat_id: str | None,
+    message_id: str | None,
+    messages: list[dict[str, Any]] | None,
+    logical_name: str = "",
+) -> tuple[str, str, str]:
+    """Resolve the best available scope for a tool call."""
+    session_id, turn_id = _extract_scope(metadata)
+    if session_id and turn_id:
+        return session_id, turn_id, "metadata"
+
+    session_id, turn_id = _derive_scope(metadata, chat_id, message_id)
+    if session_id:
+        resolved_session_id, resolved_turn_id = await _resolve_scope_via_sidecar(
+            sidecar_url,
+            session_id,
+            logical_name=logical_name,
+        )
+        if resolved_session_id and resolved_turn_id:
+            return resolved_session_id, resolved_turn_id, "sidecar_resolve"
+
+    await _ensure_inline_images_staged(
+        sidecar_url,
+        webui_url,
+        session_id,
+        turn_id,
+        messages,
+    )
+    return session_id, turn_id, "fallback"
+
+
+async def _resolve_scope_via_sidecar(
+    sidecar_url: str,
+    session_id: str,
+    logical_name: str = "",
+) -> tuple[str, str]:
+    """Ask the sidecar for the newest matching scope in a session."""
+    if not session_id:
+        return "", ""
+
+    try:
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            payload: dict[str, Any] = {"session_id": session_id}
+            if logical_name:
+                payload["logical_name"] = logical_name
+            resp = await client.post(
+                f"{sidecar_url}/attachments/resolve",
+                json=payload,
+            )
+            if resp.status_code != 200:
+                return "", ""
+            data = resp.json()
+            return data.get("session_id", ""), data.get("turn_id", "")
+    except httpx.RequestError:
+        return "", ""
 
 
 async def _ensure_inline_images_staged(

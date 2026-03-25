@@ -16,6 +16,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from perception_api import detector, florence, ocr, tagger
 from perception_api.attachments import (
     cleanup_expired_scopes,
+    find_latest_scope,
     get_or_create_scope,
     get_scope,
     remove_scope,
@@ -38,6 +39,8 @@ from perception_api.schemas import (
     InspectResponse,
     ListRequest,
     ListResponse,
+    ResolveScopeRequest,
+    ResolveScopeResponse,
     TagEntry,
     TagRequest,
     TagResponse,
@@ -355,6 +358,35 @@ async def list_attachments(req: ListRequest):
     )
 
     return ListResponse(attachments=att_infos, display_text=display)
+
+
+@app.post("/attachments/resolve", response_model=ResolveScopeResponse)
+async def resolve_attachment_scope(req: ResolveScopeRequest):
+    """Resolve the newest matching attachment scope for a session."""
+    started = perf_counter()
+    scope = find_latest_scope(req.session_id, req.logical_name)
+    if scope is None:
+        raise HTTPException(
+            status_code=404,
+            detail=(
+                f"No matching attachment scope found for session '{req.session_id}'."
+                if not req.logical_name
+                else f"No matching attachment scope found for session '{req.session_id}' and name '{req.logical_name}'."
+            ),
+        )
+
+    log.info(
+        "resolve_scope session=%s logical_name=%s turn=%s took_ms=%.1f",
+        req.session_id,
+        req.logical_name or "<any>",
+        scope.turn_id,
+        _ms(started),
+    )
+    return ResolveScopeResponse(
+        session_id=scope.session_id,
+        turn_id=scope.turn_id,
+        logical_name=req.logical_name,
+    )
 
 
 # ── Inspect (Florence-2) ─────────────────────────────────────────────

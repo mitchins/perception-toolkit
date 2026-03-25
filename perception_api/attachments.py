@@ -165,6 +165,26 @@ def get_scope(session_id: str, turn_id: str) -> SandboxScope | None:
     return _scopes.get(key)
 
 
+def find_latest_scope(session_id: str, logical_name: str | None = None) -> SandboxScope | None:
+    """Return the newest non-empty scope for a session, optionally requiring a logical name."""
+    safe_session = _sanitize_id(session_id)
+    candidates: list[tuple[float, SandboxScope]] = []
+
+    for scope in _scopes.values():
+        if scope.session_id != safe_session or not scope._manifest:
+            continue
+        if logical_name and scope.get_attachment(logical_name) is None:
+            continue
+        latest_staged_at = max(meta.staged_at for meta in scope._manifest.values())
+        candidates.append((latest_staged_at, scope))
+
+    if not candidates:
+        return None
+
+    candidates.sort(key=lambda item: item[0], reverse=True)
+    return candidates[0][1]
+
+
 def remove_scope(session_id: str, turn_id: str) -> None:
     key = f"{_sanitize_id(session_id)}:{_sanitize_id(turn_id)}"
     scope = _scopes.pop(key, None)

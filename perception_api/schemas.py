@@ -53,6 +53,11 @@ class ListRequest(BaseModel):
     turn_id: str
 
 
+class ResolveScopeRequest(BaseModel):
+    session_id: str
+    logical_name: str | None = None
+
+
 # ── Response schemas ──────────────────────────────────────────────────
 
 class CapabilityAction(BaseModel):
@@ -74,6 +79,12 @@ class AttachmentInfo(BaseModel):
 class ListResponse(BaseModel):
     attachments: list[AttachmentInfo]
     display_text: str  # pre-formatted text for LLM consumption
+
+
+class ResolveScopeResponse(BaseModel):
+    session_id: str
+    turn_id: str
+    logical_name: str | None = None
 
 
 class InspectResponse(BaseModel):
