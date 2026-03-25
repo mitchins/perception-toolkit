@@ -16,6 +16,7 @@ from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from perception_api import detector, florence, ocr, tagger
 from perception_api.attachments import (
     cleanup_expired_scopes,
+    describe_session_scopes,
     find_latest_scope,
     get_or_create_scope,
     get_scope,
@@ -57,6 +58,47 @@ API_SCHEMA_VERSION = "perception-sidecar-2026-03-25"
 def _ms(start: float) -> float:
     """Return elapsed milliseconds since start."""
     return (perf_counter() - start) * 1000.0
+
+
+def _log_lookup_404(
+    operation: str,
+    session_id: str,
+    turn_id: str,
+    logical_name: str = "",
+    *,
+    reason: str,
+    scope=None,
+) -> None:
+    """Emit detailed console diagnostics for scope/attachment 404s."""
+    session_scopes = describe_session_scopes(session_id)
+    requested_scope_names = (
+        sorted(meta.logical_name for meta in scope.list_attachments())
+        if scope is not None
+        else []
+    )
+    latest_any_scope = find_latest_scope(session_id)
+    latest_named_scope = find_latest_scope(session_id, logical_name) if logical_name else None
+    rendered_scopes = (
+        "; ".join(
+            f"{item['turn_id']}[{', '.join(item['attachment_names']) or '<empty>'}]"
+            for item in session_scopes[:5]
+        )
+        if session_scopes
+        else "<none>"
+    )
+    log.warning(
+        "%s 404: reason=%s session=%s turn=%s logical_name=%s requested_scope_names=%s "
+        "latest_any_turn=%s latest_named_turn=%s session_scopes=%s",
+        operation,
+        reason,
+        session_id or "<missing>",
+        turn_id or "<missing>",
+        logical_name or "<none>",
+        requested_scope_names,
+        latest_any_scope.turn_id if latest_any_scope is not None else "<none>",
+        latest_named_scope.turn_id if latest_named_scope is not None else "<none>",
+        rendered_scopes,
+    )
 
 
 @asynccontextmanager
@@ -366,6 +408,13 @@ async def resolve_attachment_scope(req: ResolveScopeRequest):
     started = perf_counter()
     scope = find_latest_scope(req.session_id, req.logical_name)
     if scope is None:
+        _log_lookup_404(
+            "resolve_scope",
+            req.session_id,
+            "",
+            req.logical_name or "",
+            reason="scope_missing",
+        )
         raise HTTPException(
             status_code=404,
             detail=(
@@ -402,10 +451,25 @@ async def inspect_image(req: InspectRequest):
 
     scope = get_scope(req.session_id, req.turn_id)
     if scope is None:
+        _log_lookup_404(
+            "inspect_image",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            reason="scope_missing",
+        )
         raise HTTPException(status_code=404, detail="No sandbox scope found for this session/turn.")
 
     path = scope.resolve_path(req.logical_name)
     if path is None:
+        _log_lookup_404(
+            "inspect_image",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            reason="attachment_missing",
+            scope=scope,
+        )
         raise HTTPException(
             status_code=404,
             detail=f"Attachment '{req.logical_name}' not found in sandbox.",
@@ -464,10 +528,25 @@ async def extract_text(req: OCRRequest):
 
     scope = get_scope(req.session_id, req.turn_id)
     if scope is None:
+        _log_lookup_404(
+            "extract_text",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            reason="scope_missing",
+        )
         raise HTTPException(status_code=404, detail="No sandbox scope found for this session/turn.")
 
     path = scope.resolve_path(req.logical_name)
     if path is None:
+        _log_lookup_404(
+            "extract_text",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            reason="attachment_missing",
+            scope=scope,
+        )
         raise HTTPException(
             status_code=404,
             detail=f"Attachment '{req.logical_name}' not found in sandbox.",
@@ -521,10 +600,25 @@ async def detect_objects(req: DetectRequest):
 
     scope = get_scope(req.session_id, req.turn_id)
     if scope is None:
+        _log_lookup_404(
+            "detect_objects",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            reason="scope_missing",
+        )
         raise HTTPException(status_code=404, detail="No sandbox scope found for this session/turn.")
 
     path = scope.resolve_path(req.logical_name)
     if path is None:
+        _log_lookup_404(
+            "detect_objects",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            reason="attachment_missing",
+            scope=scope,
+        )
         raise HTTPException(
             status_code=404,
             detail=f"Attachment '{req.logical_name}' not found in sandbox.",
@@ -585,10 +679,25 @@ async def tag_image(req: TagRequest):
 
     scope = get_scope(req.session_id, req.turn_id)
     if scope is None:
+        _log_lookup_404(
+            "tag_image",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            reason="scope_missing",
+        )
         raise HTTPException(status_code=404, detail="No sandbox scope found for this session/turn.")
 
     path = scope.resolve_path(req.logical_name)
     if path is None:
+        _log_lookup_404(
+            "tag_image",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            reason="attachment_missing",
+            scope=scope,
+        )
         raise HTTPException(
             status_code=404,
             detail=f"Attachment '{req.logical_name}' not found in sandbox.",

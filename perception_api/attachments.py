@@ -185,6 +185,32 @@ def find_latest_scope(session_id: str, logical_name: str | None = None) -> Sandb
     return candidates[0][1]
 
 
+def describe_session_scopes(session_id: str) -> list[dict[str, Any]]:
+    """Return a debug-friendly summary of scopes currently held for a session."""
+    safe_session = _sanitize_id(session_id)
+    summaries: list[dict[str, Any]] = []
+
+    for scope in _scopes.values():
+        if scope.session_id != safe_session:
+            continue
+        attachment_names = sorted(scope._manifest.keys())
+        latest_staged_at = max(
+            (meta.staged_at for meta in scope._manifest.values()),
+            default=0.0,
+        )
+        summaries.append(
+            {
+                "turn_id": scope.turn_id,
+                "attachment_names": attachment_names,
+                "attachment_count": len(attachment_names),
+                "latest_staged_at": latest_staged_at,
+            }
+        )
+
+    summaries.sort(key=lambda item: item["latest_staged_at"], reverse=True)
+    return summaries
+
+
 def remove_scope(session_id: str, turn_id: str) -> None:
     key = f"{_sanitize_id(session_id)}:{_sanitize_id(turn_id)}"
     scope = _scopes.pop(key, None)
