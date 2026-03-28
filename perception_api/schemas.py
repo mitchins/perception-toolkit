@@ -74,6 +74,12 @@ class AttachmentInfo(BaseModel):
     width: int | None = None
     height: int | None = None
     size_bytes: int = 0
+    auto_media_type: str | None = None
+    auto_media_confidence: float | None = None
+    auto_media_total_ms: float | None = None
+    auto_media_device: str | None = None
+    auto_media_low_confidence: bool = False
+    decode_warning: str | None = None
 
 
 class ListResponse(BaseModel):

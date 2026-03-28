@@ -1,0 +1,132 @@
+{
+  "count": 13,
+  "by_label": {
+    "real_photo": 5,
+    "painting_physical": 1,
+    "illustration": 2,
+    "rendered_2d": 1,
+    "screenshot": 1,
+    "rendered_3d": 3
+  },
+  "latency_ms": {
+    "min": 240.1,
+    "max": 9720.6,
+    "avg": 1707.8
+  },
+  "results": [
+    {
+      "file": "3703_9847_KevinShi_UnitedStates_Open_NaturalWorldWildlife_2026.webp",
+      "label": "real_photo",
+      "confidence": 0.8169,
+      "device": "mps",
+      "total_ms": 9720.6,
+      "low_confidence": false
+    },
+    {
+      "file": "3805_9949_FilipHrebenda_Slovakia_Open_Travel_2026.webp",
+      "label": "painting_physical",
+      "confidence": 0.9028,
+      "device": "mps",
+      "total_ms": 1358.6,
+      "low_confidence": false
+    },
+    {
+      "file": "6880.webp",
+      "label": "real_photo",
+      "confidence": 0.9859,
+      "device": "mps",
+      "total_ms": 495.7,
+      "low_confidence": false
+    },
+    {
+      "file": "Photo-3.jpg",
+      "label": "real_photo",
+      "confidence": 0.9955,
+      "device": "mps",
+      "total_ms": 603.0,
+      "low_confidence": false
+    },
+    {
+      "file": "SS5_7144-Copy1-1024x684.jpg",
+      "label": "real_photo",
+      "confidence": 1.0,
+      "device": "mps",
+      "total_ms": 1014.3,
+      "low_confidence": false
+    },
+    {
+      "file": "cIMvCx2rNg22bOVeGdqs--5--9HYHg.jpg",
+      "label": "illustration",
+      "confidence": 0.9998,
+      "device": "mps",
+      "total_ms": 1527.4,
+      "low_confidence": false
+    },
+    {
+      "file": "canvas.png",
+      "label": "rendered_2d",
+      "confidence": 1.0,
+      "device": "mps",
+      "total_ms": 1218.1,
+      "low_confidence": false
+    },
+    {
+      "file": "dKFCLXC6zw5p5ATokj6G--5--4vPkD.jpg",
+      "label": "illustration",
+      "confidence": 0.9714,
+      "device": "mps",
+      "total_ms": 240.1,
+      "low_confidence": false
+    },
+    {
+      "file": "duolingo_korean_unit.png",
+      "label": "screenshot",
+      "confidence": 1.0,
+      "device": "mps",
+      "total_ms": 810.3,
+      "low_confidence": false
+    },
+    {
+      "file": "hqdefault.jpg",
+      "label": "real_photo",
+      "confidence": 0.9635,
+      "device": "mps",
+      "total_ms": 367.7,
+      "low_confidence": false
+    },
+    {
+      "file": "istockphoto-2182378061-612x612.jpg",
+      "label": "rendered_3d",
+      "confidence": 0.9206,
+      "device": "mps",
+      "total_ms": 866.7,
+      "low_confidence": false
+    },
+    {
+      "file": "original.jpg",
+      "label": "rendered_3d",
+      "confidence": 0.8228,
+      "device": "mps",
+      "total_ms": 262.5,
+      "low_confidence": false
+    },
+    {
+      "file": "pnQLd6EXBtFJgy2gDLaNQV.jpg",
+      "label": "rendered_3d",
+      "confidence": 0.5552,
+      "device": "mps",
+      "total_ms": 3716.5,
+      "low_confidence": true
+    }
+  ],
+  "failures": [
+    {
+      "file": "NatGeo_ConestEntry_Final.avif",
+      "error": "Failed to decode frame 0: No codec available"
+    },
+    {
+      "file": "original.avif",
+      "error": "Failed to decode frame 0: No codec available"
+    }
+  ]
+}

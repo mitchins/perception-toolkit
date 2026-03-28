@@ -39,7 +39,6 @@ WEBUI_URL = os.environ.get("OPENWEBUI_BASE_URL", "http://localhost:8080")
 SYSTEM_HINT = """[PERCEPTION SANDBOX ACTIVE]
 Attachments are available in a scoped sandbox for this turn.
 If the user uploaded an image in this turn, treat that as the active image for phrases like "this image".
-Do not rely on prior-turn image descriptions unless the user explicitly asks for comparison.
 Use get_perception_capabilities() first if you are unsure which actions are available.
 Use list_attachments() first to inspect the files available for the current turn.
 Use inspect_image(name, intent, query) to analyse image content.
@@ -286,14 +285,12 @@ class Filter:
 
         # Inject system hint
         _inject_system_hint(messages)
-        if current_user_msg is not None and staged_names:
-            _inject_turn_attachment_note(current_user_msg, staged_names)
-            log.info(
-                "Perception filter activated sandbox: session=%s turn=%s staged=%s",
-                session_id,
-                turn_id,
-                ",".join(dict.fromkeys(staged_names)),
-            )
+        log.info(
+            "Perception filter activated sandbox: session=%s turn=%s staged=%s",
+            session_id,
+            turn_id,
+            ",".join(dict.fromkeys(staged_names)),
+        )
 
         return body
 
@@ -624,27 +621,3 @@ def _inject_system_hint(messages: list[dict]) -> None:
     # Prepend system hint
     messages.insert(0, {"role": "system", "content": SYSTEM_HINT})
 
-
-def _inject_turn_attachment_note(message: dict[str, Any], staged_names: list[str]) -> None:
-    """Append a compact current-turn attachment manifest to the active user message."""
-    unique_names = []
-    for name in staged_names:
-        if name not in unique_names:
-            unique_names.append(name)
-
-    note = (
-        "[Current turn attachments: "
-        + ", ".join(unique_names)
-        + ". For questions about \"this image\", use only these names unless the user asks to compare.]"
-    )
-    content = message.get("content")
-    if isinstance(content, list):
-        if any(
-            isinstance(part, dict)
-            and part.get("type") == "text"
-            and isinstance(part.get("text"), str)
-            and "[Current turn attachments:" in part.get("text", "")
-            for part in content
-        ):
-            return
-        content.append({"type": "text", "text": note})

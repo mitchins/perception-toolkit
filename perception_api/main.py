@@ -7,13 +7,15 @@ All heavy inference lives here. Open WebUI calls this service over HTTP.
 from __future__ import annotations
 
 import logging
+import re
 from contextlib import asynccontextmanager
+from pathlib import Path
 from time import perf_counter
 
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 
-from perception_api import detector, florence, ocr, tagger
+from perception_api import classifier, detector, florence, ocr, tagger
 from perception_api.attachments import (
     cleanup_expired_scopes,
     describe_session_scopes,
@@ -23,6 +25,11 @@ from perception_api.attachments import (
     remove_scope,
 )
 from perception_api.config import get_config, reload_config
+from perception_api.image_codecs import (
+    collect_codec_diagnostics,
+    get_pillow_codec_support,
+    run_startup_codec_self_check,
+)
 from perception_api.schemas import (
     AttachmentInfo,
     CapabilitiesResponse,
@@ -101,6 +108,28 @@ def _log_lookup_404(
     )
 
 
+def _is_generic_attachment_name(logical_name: str) -> bool:
+    """Return True for common model-invented attachment filenames."""
+    if not logical_name:
+        return False
+
+    file_name = logical_name.rsplit("/", 1)[-1]
+    stem = file_name.rsplit(".", 1)[0].lower()
+    normalized = re.sub(r"[^a-z0-9]+", "", stem)
+    generic_prefixes = (
+        "screenshot",
+        "screen",
+        "image",
+        "img",
+        "photo",
+        "attachment",
+        "file",
+        "upload",
+        "picture",
+    )
+    return any(normalized == prefix or normalized.startswith(prefix) for prefix in generic_prefixes)
+
+
 def _resolve_attachment_for_request(
     operation: str,
     session_id: str,
@@ -124,7 +153,7 @@ def _resolve_attachment_for_request(
         return scope, path, logical_name
 
     attachments = scope.list_attachments()
-    if len(attachments) == 1:
+    if len(attachments) == 1 and _is_generic_attachment_name(logical_name):
         fallback_name = attachments[0].logical_name
         fallback_path = scope.resolve_path(fallback_name)
         if fallback_path is not None:
@@ -155,8 +184,8 @@ def _attach_resolution_note(text: str, requested_name: str, resolved_name: str) 
     if not resolved_name or resolved_name == requested_name:
         return text
     note = (
-        f"Note: requested attachment '{requested_name}' was not found; "
-        f"using the only available attachment '{resolved_name}' for this turn.\n\n"
+        f"Attachment alias fallback used: requested '{requested_name}' was not found; "
+        f"the result below comes from the only available attachment '{resolved_name}' in this scope.\n\n"
     )
     return note + text
 
@@ -174,6 +203,7 @@ async def lifespan(app: FastAPI):
         cfg.detector.enabled,
         cfg.classifier.enabled,
     )
+    run_startup_codec_self_check()
     # Pre-load Florence if enabled (avoids cold start on first request)
     if cfg.florence.enabled:
         try:
@@ -190,6 +220,11 @@ async def lifespan(app: FastAPI):
             detector.ensure_loaded()
         except Exception as e:
             log.warning("Detector pre-load failed (will retry on first request): %s", e)
+    if cfg.classifier.enabled:
+        try:
+            classifier.ensure_loaded()
+        except Exception as e:
+            log.warning("Classifier pre-load failed (will retry on first request): %s", e)
     yield
     log.info("Perception sidecar shutting down.")
 
@@ -241,10 +276,26 @@ async def config_summary():
             "det_lang": cfg.ocr.det_lang,
             "rec_lang": cfg.ocr.rec_lang,
             "rec_version": cfg.ocr.rec_version,
+            "fallback_rec_langs": cfg.ocr.fallback_rec_langs,
+            "use_coreml": cfg.ocr.use_coreml,
+            "coreml_model_format": cfg.ocr.coreml_model_format,
+            "coreml_compute_units": cfg.ocr.coreml_compute_units,
+            "coreml_require_static_input_shapes": cfg.ocr.coreml_require_static_input_shapes,
+            "coreml_enable_on_subgraphs": cfg.ocr.coreml_enable_on_subgraphs,
+            "coreml_specialization_strategy": cfg.ocr.coreml_specialization_strategy,
+            "coreml_profile_compute_plan": cfg.ocr.coreml_profile_compute_plan,
+            "coreml_allow_low_precision_accumulation_on_gpu": cfg.ocr.coreml_allow_low_precision_accumulation_on_gpu,
+            "coreml_model_cache_directory": cfg.ocr.coreml_model_cache_directory,
+            "runtime": ocr.get_runtime_info(),
         },
         "classifier": {
             "enabled": cfg.classifier.enabled,
+            "model_path": cfg.classifier.model_path,
+            "threshold_default": cfg.classifier.threshold_default,
+            "device": cfg.classifier.device,
+            "runtime": classifier.get_runtime_info(),
         },
+        "image_codecs": get_pillow_codec_support(),
         "detector": {
             "enabled": cfg.detector.enabled,
             "model_id": cfg.detector.model_id,
@@ -275,6 +326,7 @@ async def backends_status():
         "ocr": {
             "enabled": cfg.ocr.enabled,
             "loaded": ocr._loaded,
+            "runtime": ocr.get_runtime_info(),
         },
         "detector": {
             "enabled": cfg.detector.enabled,
@@ -282,9 +334,17 @@ async def backends_status():
         },
         "classifier": {
             "enabled": cfg.classifier.enabled,
-            "loaded": False,  # stub
+            "loaded": classifier._loaded,
+            "runtime": classifier.get_runtime_info(),
         },
+        "image_codecs": get_pillow_codec_support(),
     }
+
+
+@app.get("/diagnostics/codecs")
+async def codec_diagnostics():
+    """Return explicit runtime codec diagnostics, including local sample decode checks."""
+    return collect_codec_diagnostics()
 
 
 @app.get("/capabilities", response_model=CapabilitiesResponse)
@@ -324,7 +384,8 @@ async def capabilities():
             notes=(
                 f"Uses RapidOCR with default threshold {cfg.ocr.score_threshold_default:.2f}, "
                 f"detection language {cfg.ocr.det_lang}, recognition language {cfg.ocr.rec_lang}, "
-                f"recognition model line {cfg.ocr.rec_version}."
+                f"recognition model line {cfg.ocr.rec_version}, fallback recognition languages {cfg.ocr.fallback_rec_langs}, "
+                f"CoreML requested: {cfg.ocr.use_coreml}."
                 if cfg.ocr.enabled
                 else "Falls back to the Florence backend when RapidOCR is disabled."
             ),
@@ -344,7 +405,8 @@ async def capabilities():
             notes=(
                 f"Uses RapidOCR with default threshold {cfg.ocr.score_threshold_default:.2f}, "
                 f"detection language {cfg.ocr.det_lang}, recognition language {cfg.ocr.rec_lang}, "
-                f"recognition model line {cfg.ocr.rec_version}."
+                f"recognition model line {cfg.ocr.rec_version}, fallback recognition languages {cfg.ocr.fallback_rec_langs}, "
+                f"CoreML requested: {cfg.ocr.use_coreml}."
                 if cfg.ocr.enabled
                 else "Disabled because the OCR backend is off."
             ),
@@ -380,7 +442,10 @@ async def capabilities():
             for action in actions
         ],
         "Recommended default workflow:",
-        "- First call list_attachments() for the current turn.",
+        "- If the current turn already names the staged attachment(s), reuse those exact names directly.",
+        "- Call list_attachments() when answering a follow-up about an earlier image, when attachment names are unclear, or when you need to confirm available files.",
+        "- Reuse only the exact attachment names returned by list_attachments(); do not invent names like screenshot_1.jpg.",
+        "- On follow-up turns about an earlier image, call list_attachments() again before OCR or inspection.",
         "- Then use inspect_image(..., intent='general') unless the user specifically wants OCR, region grounding, object counts, or tags.",
         "- Use extract_text(...) first when the user wants the actual text read from an image.",
         "- Avoid inspect_image(..., intent='general') for OCR-heavy requests unless layout or other non-text visual context is also needed.",
@@ -418,12 +483,32 @@ async def stage_attachment(
     except ValueError as e:
         raise HTTPException(status_code=400, detail=str(e))
 
+    classification_result = None
+    if classifier.is_available():
+        try:
+            classification_result = classifier.classify_image(Path(meta.staged_path))
+            meta.auto_media_type = classification_result["label"]
+            meta.auto_media_confidence = round(float(classification_result["confidence"]), 4)
+            meta.auto_media_total_ms = round(float(classification_result["total_ms"]), 1)
+            meta.auto_media_device = classification_result["device"]
+            meta.auto_media_low_confidence = bool(classification_result["low_confidence"])
+        except Exception as e:
+            log.warning(
+                "Classifier auto-pass failed for session=%s turn=%s name=%s: %s",
+                session_id,
+                turn_id,
+                logical_name,
+                e,
+            )
+
     log.info(
-        "stage_attachment session=%s turn=%s name=%s size_bytes=%d took_ms=%.1f",
+        "stage_attachment session=%s turn=%s name=%s size_bytes=%d classifier_label=%s classifier_ms=%s took_ms=%.1f",
         session_id,
         turn_id,
         logical_name,
         len(data),
+        classification_result["label"] if classification_result else "<none>",
+        f"{classification_result['total_ms']:.1f}" if classification_result else "<none>",
         _ms(started),
     )
 
@@ -452,6 +537,12 @@ async def list_attachments(req: ListRequest):
             width=m.width,
             height=m.height,
             size_bytes=m.size_bytes,
+            auto_media_type=m.auto_media_type,
+            auto_media_confidence=m.auto_media_confidence,
+            auto_media_total_ms=m.auto_media_total_ms,
+            auto_media_device=m.auto_media_device,
+            auto_media_low_confidence=m.auto_media_low_confidence,
+            decode_warning=m.decode_warning,
         )
         for m in items
     ]
@@ -474,6 +565,17 @@ async def resolve_attachment_scope(req: ResolveScopeRequest):
     """Resolve the newest matching attachment scope for a session."""
     started = perf_counter()
     scope = find_latest_scope(req.session_id, req.logical_name)
+    if scope is None and req.logical_name and _is_generic_attachment_name(req.logical_name):
+        latest_any_scope = find_latest_scope(req.session_id)
+        if latest_any_scope is not None and len(latest_any_scope.list_attachments()) == 1:
+            log.warning(
+                "resolve_scope alias fallback: session=%s requested_name=%s turn=%s available=%s",
+                req.session_id,
+                req.logical_name,
+                latest_any_scope.turn_id,
+                [item.logical_name for item in latest_any_scope.list_attachments()],
+            )
+            scope = latest_any_scope
     if scope is None:
         _log_lookup_404(
             "resolve_scope",

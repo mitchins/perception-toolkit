@@ -19,10 +19,19 @@ from pathlib import Path
 from typing import Any
 
 from perception_api.config import get_config
+from perception_api.image_codecs import probe_image_info
 
 log = logging.getLogger(__name__)
 
-ALLOWED_IMAGE_TYPES = {"image/jpeg", "image/png", "image/webp", "image/gif", "image/bmp", "image/tiff"}
+ALLOWED_IMAGE_TYPES = {
+    "image/jpeg",
+    "image/png",
+    "image/webp",
+    "image/gif",
+    "image/bmp",
+    "image/tiff",
+    "image/avif",
+}
 
 
 @dataclass
@@ -33,6 +42,12 @@ class AttachmentMeta:
     width: int | None = None
     height: int | None = None
     size_bytes: int = 0
+    auto_media_type: str | None = None
+    auto_media_confidence: float | None = None
+    auto_media_total_ms: float | None = None
+    auto_media_device: str | None = None
+    auto_media_low_confidence: bool = False
+    decode_warning: str | None = None
     staged_path: str = ""  # internal-only, never exposed to model
     staged_at: float = field(default_factory=time.time)
 
@@ -40,7 +55,22 @@ class AttachmentMeta:
         """Human-readable single-line summary for tool output."""
         size_str = _format_bytes(self.size_bytes)
         dims = f"{self.width}x{self.height}" if self.width and self.height else "unknown dims"
-        return f"- {self.logical_name} ({self.mime_type}, {dims}, {size_str})"
+        line = f"- {self.logical_name} ({self.mime_type}, {dims}, {size_str})"
+        if self.auto_media_type:
+            detail = (
+                f"auto_type={self.auto_media_type}"
+                f" ({(self.auto_media_confidence or 0.0):.2f}"
+                f", {(self.auto_media_total_ms or 0.0):.1f} ms"
+            )
+            if self.auto_media_device:
+                detail += f", {self.auto_media_device}"
+            detail += ")"
+            if self.auto_media_low_confidence:
+                detail += " low-confidence"
+            line += f" | {detail}"
+        if self.decode_warning:
+            line += f" | warning={self.decode_warning}"
+        return line
 
     def to_dict(self) -> dict[str, Any]:
         d = asdict(self)
@@ -88,7 +118,7 @@ class SandboxScope:
         dest = self.base / safe_name
         dest.write_bytes(data)
 
-        width, height = _probe_image_dims(dest)
+        width, height, decode_warning = _probe_image_dims(dest)
 
         meta = AttachmentMeta(
             logical_name=safe_name,
@@ -96,6 +126,7 @@ class SandboxScope:
             width=width,
             height=height,
             size_bytes=len(data),
+            decode_warning=decode_warning,
             staged_path=str(dest),
         )
         self._manifest[safe_name] = meta
@@ -263,11 +294,6 @@ def _sanitize_filename(name: str) -> str:
     return safe[:255]
 
 
-def _probe_image_dims(path: Path) -> tuple[int | None, int | None]:
+def _probe_image_dims(path: Path) -> tuple[int | None, int | None, str | None]:
     """Try to read image dimensions without heavy dependencies."""
-    try:
-        from PIL import Image
-        with Image.open(path) as img:
-            return img.size  # (width, height)
-    except Exception:
-        return None, None
+    return probe_image_info(path)

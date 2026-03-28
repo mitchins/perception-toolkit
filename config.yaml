@@ -34,6 +34,16 @@ backends:
     det_lang: multi
     rec_lang: ch
     rec_version: PP-OCRv5
+    fallback_rec_langs: [korean]
+    use_coreml: false
+    coreml_model_format: MLProgram
+    coreml_compute_units: ALL
+    coreml_require_static_input_shapes: 0
+    coreml_enable_on_subgraphs: 0
+    coreml_specialization_strategy: FastPrediction
+    coreml_profile_compute_plan: 0
+    coreml_allow_low_precision_accumulation_on_gpu: 0
+    coreml_model_cache_directory: /tmp/RapidOCR
 
   detector:
     enabled: false
@@ -44,8 +54,8 @@ backends:
     device: auto
 
   classifier:
-    enabled: false
-    model_path: /models/custom_classifier.onnx
+    enabled: true
+    model_path: v2.8_draft_single_model_mcp
     threshold_default: 0.60
     device: auto
 

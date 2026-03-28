@@ -15,6 +15,7 @@ from typing import Any
 
 from perception_api.config import FlorenceConfig, get_config
 from perception_api.devices import preferred_dtype_for_device, resolve_torch_device
+from perception_api.image_codecs import load_image_rgb
 
 log = logging.getLogger(__name__)
 
@@ -100,8 +101,6 @@ def run_inference(image_path: Path, intent: str, query: str = "") -> str:
         Concise text result suitable for LLM consumption.
     """
     import torch
-    from PIL import Image
-
     ensure_loaded()
     cfg = get_config().florence
     started = perf_counter()
@@ -111,7 +110,7 @@ def run_inference(image_path: Path, intent: str, query: str = "") -> str:
         raise ValueError(f"Unknown intent: {intent}")
 
     image_started = perf_counter()
-    image = Image.open(image_path).convert("RGB")
+    image = load_image_rgb(image_path)
     image_ms = (perf_counter() - image_started) * 1000.0
     results: list[str] = []
 

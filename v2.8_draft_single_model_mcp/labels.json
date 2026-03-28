@@ -1,0 +1,18 @@
+{
+  "class_names": [
+    "illustration",
+    "painting_physical",
+    "real_photo",
+    "rendered_2d",
+    "rendered_3d",
+    "screenshot"
+  ],
+  "class_indices": {
+    "illustration": 0,
+    "painting_physical": 1,
+    "real_photo": 2,
+    "rendered_2d": 3,
+    "rendered_3d": 4,
+    "screenshot": 5
+  }
+}

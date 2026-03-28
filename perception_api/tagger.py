@@ -13,6 +13,7 @@ from typing import Any
 
 from perception_api.config import WD14Config, get_config
 from perception_api.devices import resolve_torch_device
+from perception_api.image_codecs import load_image_rgb
 
 log = logging.getLogger(__name__)
 
@@ -77,8 +78,6 @@ def tag_image(image_path: Path, threshold: float | None = None) -> list[tuple[st
         List of (tag, confidence) tuples, sorted by descending confidence.
     """
     import torch
-    import numpy as np
-    from PIL import Image
     from timm.data import resolve_data_config, create_transform
 
     ensure_loaded()
@@ -88,7 +87,7 @@ def tag_image(image_path: Path, threshold: float | None = None) -> list[tuple[st
         threshold = cfg.threshold_default
     threshold = max(0.0, min(1.0, threshold))  # clamp
 
-    image = Image.open(image_path).convert("RGB")
+    image = load_image_rgb(image_path)
 
     # Build transform from model config
     transform = create_transform(**resolve_data_config(_model.pretrained_cfg))

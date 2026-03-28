@@ -40,6 +40,16 @@ class OCRConfig:
     det_lang: str = "multi"
     rec_lang: str = "ch"
     rec_version: str = "PP-OCRv5"
+    fallback_rec_langs: list[str] = field(default_factory=lambda: ["korean"])
+    use_coreml: bool = False
+    coreml_model_format: str = "MLProgram"
+    coreml_compute_units: str = "ALL"
+    coreml_require_static_input_shapes: int = 0
+    coreml_enable_on_subgraphs: int = 0
+    coreml_specialization_strategy: str = "FastPrediction"
+    coreml_profile_compute_plan: int = 0
+    coreml_allow_low_precision_accumulation_on_gpu: int = 0
+    coreml_model_cache_directory: str = "/tmp/RapidOCR"
 
 
 @dataclass
@@ -112,6 +122,26 @@ def _merge_env_overrides(cfg: PerceptionConfig) -> None:
         cfg.ocr.rec_lang = v
     if v := os.environ.get("PERCEPTION_OCR_REC_VERSION"):
         cfg.ocr.rec_version = v
+    if v := os.environ.get("PERCEPTION_OCR_FALLBACK_REC_LANGS"):
+        cfg.ocr.fallback_rec_langs = [item.strip() for item in v.split(",") if item.strip()]
+    if v := os.environ.get("PERCEPTION_OCR_USE_COREML"):
+        cfg.ocr.use_coreml = v.lower() in ("1", "true", "yes")
+    if v := os.environ.get("PERCEPTION_OCR_COREML_MODEL_FORMAT"):
+        cfg.ocr.coreml_model_format = v
+    if v := os.environ.get("PERCEPTION_OCR_COREML_COMPUTE_UNITS"):
+        cfg.ocr.coreml_compute_units = v
+    if v := os.environ.get("PERCEPTION_OCR_COREML_REQUIRE_STATIC_INPUT_SHAPES"):
+        cfg.ocr.coreml_require_static_input_shapes = int(v)
+    if v := os.environ.get("PERCEPTION_OCR_COREML_ENABLE_ON_SUBGRAPHS"):
+        cfg.ocr.coreml_enable_on_subgraphs = int(v)
+    if v := os.environ.get("PERCEPTION_OCR_COREML_SPECIALIZATION_STRATEGY"):
+        cfg.ocr.coreml_specialization_strategy = v
+    if v := os.environ.get("PERCEPTION_OCR_COREML_PROFILE_COMPUTE_PLAN"):
+        cfg.ocr.coreml_profile_compute_plan = int(v)
+    if v := os.environ.get("PERCEPTION_OCR_COREML_ALLOW_LOW_PRECISION_ACCUMULATION_ON_GPU"):
+        cfg.ocr.coreml_allow_low_precision_accumulation_on_gpu = int(v)
+    if v := os.environ.get("PERCEPTION_OCR_COREML_MODEL_CACHE_DIRECTORY"):
+        cfg.ocr.coreml_model_cache_directory = v
 
     if v := os.environ.get("PERCEPTION_DETECTOR_ENABLED"):
         cfg.detector.enabled = v.lower() in ("1", "true", "yes")
@@ -132,6 +162,8 @@ def _merge_env_overrides(cfg: PerceptionConfig) -> None:
         cfg.classifier.model_path = v
     if v := os.environ.get("PERCEPTION_CLASSIFIER_THRESHOLD"):
         cfg.classifier.threshold_default = float(v)
+    if v := os.environ.get("PERCEPTION_CLASSIFIER_DEVICE"):
+        cfg.classifier.device = v
 
     if v := os.environ.get("PERCEPTION_SANDBOX_BASE"):
         cfg.sandbox.base_path = v

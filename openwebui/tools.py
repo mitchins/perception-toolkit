@@ -99,6 +99,9 @@ class Tools:
         List attachments available in the current perception sandbox.
 
         Returns a concise manifest of staged files for this turn.
+        Use this before OCR or inspection when answering follow-up questions
+        about an earlier image. Reuse the exact attachment name returned here;
+        do not invent or rename filenames.
 
         :param scope: Scope of attachments to list. Currently only "turn" is supported.
         :return: Text listing of available attachments.
@@ -153,7 +156,7 @@ class Tools:
         from a screenshot, document, or UI image. Use this tool's general
         intent for non-text visual description.
 
-        :param name: Logical filename of the attachment (e.g. "image_1.jpg").
+        :param name: Exact logical filename returned by list_attachments() (e.g. "image_1.jpg"). Do not invent attachment names.
         :param intent: Analysis type — "general" for description, "ocr" for text extraction, "regions" for region analysis.
         :param query: Optional query for region-based analysis (used with intent="regions").
         :return: Textual analysis result from the perception backend.
@@ -223,7 +226,7 @@ class Tools:
 
         Returns grouped counts plus raw detector hits for the named image.
 
-        :param name: Logical filename of the attachment (e.g. "image_1.jpg").
+        :param name: Exact logical filename returned by list_attachments() (e.g. "image_1.jpg"). Do not invent attachment names.
         :param threshold: Optional detector confidence threshold override.
         :param iou_threshold: Optional detector IoU threshold override.
         :param max_detections: Optional cap on returned detections.
@@ -292,7 +295,7 @@ class Tools:
         Prefer this tool when the user asks to read, transcribe, quote, or
         explain text that appears in an image.
 
-        :param name: Logical filename of the attachment (e.g. "image_1.jpg").
+        :param name: Exact logical filename returned by list_attachments() (e.g. "image_1.jpg"). Do not invent attachment names.
         :param threshold: Optional OCR confidence threshold override.
         :return: Textual OCR result from the perception backend.
         """
@@ -454,6 +457,16 @@ async def _resolve_scope_via_sidecar(
                 f"{sidecar_url}/attachments/resolve",
                 json=payload,
             )
+            if resp.status_code != 200 and logical_name:
+                # Follow-up turns often invent a generic filename like
+                # "screenshot_1.jpg" even when the prior turn staged
+                # something like "image_1.jpg". Retry by asking for the
+                # latest scope in the session, then let the sidecar's
+                # single-attachment alias fallback resolve the actual file.
+                resp = await client.post(
+                    f"{sidecar_url}/attachments/resolve",
+                    json={"session_id": session_id},
+                )
             if resp.status_code != 200:
                 return "", ""
             data = resp.json()

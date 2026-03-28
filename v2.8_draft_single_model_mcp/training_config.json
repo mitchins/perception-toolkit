@@ -1,0 +1,51 @@
+{
+  "class_names": [
+    "illustration",
+    "painting_physical",
+    "real_photo",
+    "rendered_2d",
+    "rendered_3d",
+    "screenshot"
+  ],
+  "class_indices": {
+    "illustration": 0,
+    "painting_physical": 1,
+    "real_photo": 2,
+    "rendered_2d": 3,
+    "rendered_3d": 4,
+    "screenshot": 5
+  },
+  "model": "efficientnet-b0",
+  "best_epoch": 22,
+  "best_harmonic_f1": 0.8653553211826062,
+  "best_accuracy": 0.8742857142857143,
+  "holdout_metrics": {
+    "accuracy": 0.8742857142857143,
+    "macro_f1": 0.8693061417337943,
+    "harmonic_f1": 0.8653553211826062,
+    "min_recall": 0.74,
+    "bottom_2_mean_recall": 0.78,
+    "per_class_f1": {
+      "illustration": 0.9047619047619048,
+      "painting_physical": 0.9484536082474226,
+      "real_photo": 0.8484848484848485,
+      "rendered_2d": 0.8314606741573033,
+      "rendered_3d": 0.7735849056603773,
+      "screenshot": 0.9090909090909091
+    },
+    "per_class_recall": {
+      "illustration": 0.95,
+      "painting_physical": 0.92,
+      "real_photo": 0.84,
+      "rendered_2d": 0.74,
+      "rendered_3d": 0.82,
+      "screenshot": 0.9
+    }
+  },
+  "epochs_trained": 30,
+  "batch_size": 32,
+  "learning_rate": 0.001,
+  "weight_decay": 0.01,
+  "hardness_weighting": 1.5,
+  "training_date": "2026-01-26T11:32:53.456447"
+}

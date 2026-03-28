@@ -1,0 +1,44 @@
+{
+  "prompts": [
+    {
+      "id": "summary_screenshot",
+      "label": "Explicit Screenshot Summary",
+      "prompt": "Summarise the focus of this screenshot."
+    },
+    {
+      "id": "summary_image",
+      "label": "Explicit Image Summary",
+      "prompt": "Summarise the focus of this image."
+    },
+    {
+      "id": "summary_table_explicit",
+      "label": "Explicit Image Summary And Table",
+      "prompt": "Summarise the focus of this language unit in the image and tabulate the provided examples side by side for translation."
+    },
+    {
+      "id": "summary_table_implicit",
+      "label": "Implicit Source Summary And Table",
+      "prompt": "Summarise the focus of this language unit and tabulate the provided examples side by side for translation."
+    },
+    {
+      "id": "read_and_table",
+      "label": "Read Text And Table",
+      "prompt": "Read the text from this image and tabulate the Korean and English examples side by side."
+    },
+    {
+      "id": "original_text",
+      "label": "Original Text Extraction",
+      "prompt": "Get the original text from the image."
+    },
+    {
+      "id": "unit_focus_translation_table",
+      "label": "Anchored Unit Focus And Translation Table",
+      "prompt": "What is the focus of this language unit in the image, and can you make a two-column translation table of the examples?"
+    },
+    {
+      "id": "tabulate_examples_only",
+      "label": "Tabulate Examples Only",
+      "prompt": "Tabulate the provided examples side by side for translation from the image."
+    }
+  ]
+}
