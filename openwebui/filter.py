@@ -47,6 +47,7 @@ Use inspect_image(name, intent, query) to analyse image content.
   - intent="regions" with an optional query for region-level analysis
 If the user asks to read, transcribe, quote, or explain text from an image, use extract_text(name, threshold) first.
 Do not call inspect_image(name, intent="general") for OCR-heavy requests unless the user also needs non-text visual context like layout, style, or surrounding objects.
+Use detect_ui_elements(name, prompt, box_threshold, text_threshold, max_detections, include_ocr_context) for screenshots or UI images when the user wants buttons, icons, inputs, menus, or a rough control inventory.
 Use detect_objects(name, threshold, iou_threshold, max_detections) when the user wants object counts or a concrete inventory of common detected objects.
 Use get_perception_capabilities() to see whether any optional specialist actions are enabled.
 Do NOT attempt to view raw image data directly. Use the tools above instead."""
@@ -620,4 +621,3 @@ def _inject_system_hint(messages: list[dict]) -> None:
 
     # Prepend system hint
     messages.insert(0, {"role": "system", "content": SYSTEM_HINT})
-

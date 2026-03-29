@@ -33,6 +33,17 @@ class DetectRequest(BaseModel):
     max_detections: int | None = None
 
 
+class GroundUIRequest(BaseModel):
+    session_id: str
+    turn_id: str
+    logical_name: str
+    prompt: str = ""
+    box_threshold: float | None = None
+    text_threshold: float | None = None
+    max_detections: int | None = None
+    include_ocr_context: bool | None = None
+
+
 class OCRRequest(BaseModel):
     session_id: str
     turn_id: str
@@ -117,6 +128,13 @@ class DetectionCountEntry(BaseModel):
     max_confidence: float
 
 
+class GroundUIElement(BaseModel):
+    label: str
+    confidence: float
+    bbox: list[float]
+    ocr_text: str = ""
+
+
 class OCRLineEntry(BaseModel):
     text: str
     confidence: float
@@ -141,6 +159,14 @@ class DetectionResponse(BaseModel):
     logical_name: str
     object_counts: list[DetectionCountEntry]
     detections: list[DetectionEntry]
+    display_text: str
+    backend_used: str = ""
+
+
+class GroundUIResponse(BaseModel):
+    logical_name: str
+    prompt_used: str
+    elements: list[GroundUIElement]
     display_text: str
     backend_used: str = ""
 

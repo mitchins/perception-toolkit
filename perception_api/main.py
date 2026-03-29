@@ -15,7 +15,7 @@ from time import perf_counter
 import uvicorn
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 
-from perception_api import classifier, detector, florence, ocr, tagger
+from perception_api import classifier, detector, florence, grounding, ocr, tagger
 from perception_api.attachments import (
     cleanup_expired_scopes,
     describe_session_scopes,
@@ -39,6 +39,9 @@ from perception_api.schemas import (
     DetectionResponse,
     DetectRequest,
     ErrorResponse,
+    GroundUIElement,
+    GroundUIRequest,
+    GroundUIResponse,
     HealthResponse,
     OCRLineEntry,
     OCRRequest,
@@ -59,7 +62,7 @@ logging.basicConfig(
     format="%(asctime)s [%(name)s] %(levelname)s: %(message)s",
 )
 log = logging.getLogger("perception_api")
-API_SCHEMA_VERSION = "perception-sidecar-2026-03-25"
+API_SCHEMA_VERSION = "perception-sidecar-2026-03-29"
 
 
 def _ms(start: float) -> float:
@@ -196,12 +199,13 @@ async def lifespan(app: FastAPI):
     cfg = get_config()
     log.info("Perception sidecar starting on %s:%d", cfg.host, cfg.port)
     log.info(
-        "Backends — Florence: %s | OCR: %s | WD-14: %s | Detector: %s | Classifier: %s",
+        "Backends — Florence: %s | OCR: %s | WD-14: %s | Detector: %s | Classifier: %s | Grounding: %s",
         cfg.florence.enabled,
         cfg.ocr.enabled,
         cfg.wd14.enabled,
         cfg.detector.enabled,
         cfg.classifier.enabled,
+        cfg.grounding.enabled,
     )
     run_startup_codec_self_check()
     # Pre-load Florence if enabled (avoids cold start on first request)
@@ -225,6 +229,11 @@ async def lifespan(app: FastAPI):
             classifier.ensure_loaded()
         except Exception as e:
             log.warning("Classifier pre-load failed (will retry on first request): %s", e)
+    if cfg.grounding.enabled:
+        try:
+            grounding.ensure_loaded()
+        except Exception as e:
+            log.warning("Grounding pre-load failed (will retry on first request): %s", e)
     yield
     log.info("Perception sidecar shutting down.")
 
@@ -251,6 +260,7 @@ async def health():
             "wd14": cfg.wd14.enabled,
             "detector": cfg.detector.enabled,
             "classifier": cfg.classifier.enabled,
+            "grounding": cfg.grounding.enabled,
         },
     )
 
@@ -295,6 +305,17 @@ async def config_summary():
             "device": cfg.classifier.device,
             "runtime": classifier.get_runtime_info(),
         },
+        "grounding": {
+            "enabled": cfg.grounding.enabled,
+            "model_id": cfg.grounding.model_id,
+            "prompt_default": cfg.grounding.prompt_default,
+            "box_threshold_default": cfg.grounding.box_threshold_default,
+            "text_threshold_default": cfg.grounding.text_threshold_default,
+            "max_detections": cfg.grounding.max_detections,
+            "include_ocr_context_default": cfg.grounding.include_ocr_context_default,
+            "device": cfg.grounding.device,
+            "runtime": grounding.get_runtime_info(),
+        },
         "image_codecs": get_pillow_codec_support(),
         "detector": {
             "enabled": cfg.detector.enabled,
@@ -337,6 +358,11 @@ async def backends_status():
             "loaded": classifier._loaded,
             "runtime": classifier.get_runtime_info(),
         },
+        "grounding": {
+            "enabled": cfg.grounding.enabled,
+            "loaded": grounding._loaded,
+            "runtime": grounding.get_runtime_info(),
+        },
         "image_codecs": get_pillow_codec_support(),
     }
 
@@ -357,6 +383,7 @@ async def capabilities():
         "wd14": cfg.wd14.enabled,
         "detector": cfg.detector.enabled,
         "classifier": cfg.classifier.enabled,
+        "grounding": cfg.grounding.enabled,
     }
     actions = [
         CapabilityAction(
@@ -431,6 +458,19 @@ async def capabilities():
                 f"Uses detector model {cfg.detector.model_id} with default threshold {cfg.detector.confidence_threshold_default:.2f}."
                 if cfg.detector.enabled
                 else "Disabled because the detector backend is off."
+            ),
+        ),
+        CapabilityAction(
+            name="detect_ui_elements",
+            enabled=cfg.grounding.enabled,
+            description="Propose screenshot/UI regions such as icons, buttons, inputs, menus, and related controls.",
+            recommended_for=["screenshots", "UI parsing", "buttons and icons", "rough control inventory"],
+            notes=(
+                f"Uses Grounding DINO model {cfg.grounding.model_id} with default box threshold "
+                f"{cfg.grounding.box_threshold_default:.2f}, text threshold {cfg.grounding.text_threshold_default:.2f}, "
+                f"max_detections {cfg.grounding.max_detections}, OCR context default {cfg.grounding.include_ocr_context_default}."
+                if cfg.grounding.enabled
+                else "Disabled because the grounding backend is off."
             ),
         ),
     ]
@@ -792,6 +832,75 @@ async def detect_objects(req: DetectRequest):
         detections=[DetectionEntry(**item) for item in detections],
         display_text=display,
         backend_used="detector",
+    )
+
+
+# ── Detect UI Elements (Grounding DINO) ─────────────────────────────
+
+@app.post("/ground_ui", response_model=GroundUIResponse)
+async def ground_ui_elements(req: GroundUIRequest):
+    """Run screenshot/UI grounding and return rough UI element proposals."""
+    started = perf_counter()
+    if not grounding.is_available():
+        raise HTTPException(
+            status_code=503,
+            detail="Grounding backend is not enabled. Enable it in config.yaml to use detect_ui_elements.",
+        )
+
+    _, path, resolved_name = _resolve_attachment_for_request(
+        "ground_ui_elements",
+        req.session_id,
+        req.turn_id,
+        req.logical_name,
+    )
+    if path is None:
+        raise HTTPException(
+            status_code=404,
+            detail=f"Attachment '{req.logical_name}' not found in sandbox.",
+        )
+
+    try:
+        result = grounding.detect_ui_elements(
+            path,
+            req.prompt,
+            req.box_threshold,
+            req.text_threshold,
+            req.max_detections,
+            req.include_ocr_context,
+        )
+    except Exception as e:
+        log.error(
+            "ground_ui_elements failed session=%s turn=%s name=%s took_ms=%.1f error=%s",
+            req.session_id,
+            req.turn_id,
+            req.logical_name,
+            _ms(started),
+            e,
+            exc_info=True,
+        )
+        raise HTTPException(status_code=500, detail=f"Grounding error: {e}")
+
+    display = grounding.format_ui_elements_for_llm(
+        result["prompt_used"],
+        result["elements"],
+    )
+    display = _attach_resolution_note(display, req.logical_name, resolved_name)
+
+    log.info(
+        "ground_ui_elements session=%s turn=%s name=%s elements=%d backend=grounding took_ms=%.1f",
+        req.session_id,
+        req.turn_id,
+        req.logical_name,
+        len(result["elements"]),
+        _ms(started),
+    )
+
+    return GroundUIResponse(
+        logical_name=resolved_name or req.logical_name,
+        prompt_used=result["prompt_used"],
+        elements=[GroundUIElement(**item) for item in result["elements"]],
+        display_text=display,
+        backend_used="grounding_dino",
     )
 
 

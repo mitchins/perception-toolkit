@@ -71,6 +71,22 @@ class ClassifierConfig:
 
 
 @dataclass
+class GroundingConfig:
+    enabled: bool = False
+    model_id: str = "IDEA-Research/grounding-dino-tiny"
+    prompt_default: str = (
+        "icon . button . checkbox . radio button . toggle . switch . "
+        "dropdown . combobox . slider . search box . input field . text field . "
+        "textbox . menu . tab . toolbar . link . image . avatar . badge . dialog . panel ."
+    )
+    box_threshold_default: float = 0.20
+    text_threshold_default: float = 0.20
+    max_detections: int = 40
+    include_ocr_context_default: bool = True
+    device: str = "auto"
+
+
+@dataclass
 class SandboxConfig:
     base_path: str = "/tmp/perception"
     ttl_seconds: int = 3600
@@ -83,6 +99,7 @@ class PerceptionConfig:
     ocr: OCRConfig = field(default_factory=OCRConfig)
     detector: DetectorConfig = field(default_factory=DetectorConfig)
     classifier: ClassifierConfig = field(default_factory=ClassifierConfig)
+    grounding: GroundingConfig = field(default_factory=GroundingConfig)
     sandbox: SandboxConfig = field(default_factory=SandboxConfig)
     host: str = "0.0.0.0"
     port: int = 8200
@@ -165,6 +182,23 @@ def _merge_env_overrides(cfg: PerceptionConfig) -> None:
     if v := os.environ.get("PERCEPTION_CLASSIFIER_DEVICE"):
         cfg.classifier.device = v
 
+    if v := os.environ.get("PERCEPTION_GROUNDING_ENABLED"):
+        cfg.grounding.enabled = v.lower() in ("1", "true", "yes")
+    if v := os.environ.get("PERCEPTION_GROUNDING_MODEL_ID"):
+        cfg.grounding.model_id = v
+    if v := os.environ.get("PERCEPTION_GROUNDING_PROMPT"):
+        cfg.grounding.prompt_default = v
+    if v := os.environ.get("PERCEPTION_GROUNDING_BOX_THRESHOLD"):
+        cfg.grounding.box_threshold_default = float(v)
+    if v := os.environ.get("PERCEPTION_GROUNDING_TEXT_THRESHOLD"):
+        cfg.grounding.text_threshold_default = float(v)
+    if v := os.environ.get("PERCEPTION_GROUNDING_MAX_DETECTIONS"):
+        cfg.grounding.max_detections = int(v)
+    if v := os.environ.get("PERCEPTION_GROUNDING_INCLUDE_OCR_CONTEXT"):
+        cfg.grounding.include_ocr_context_default = v.lower() in ("1", "true", "yes")
+    if v := os.environ.get("PERCEPTION_GROUNDING_DEVICE"):
+        cfg.grounding.device = v
+
     if v := os.environ.get("PERCEPTION_SANDBOX_BASE"):
         cfg.sandbox.base_path = v
     if v := os.environ.get("PERCEPTION_SANDBOX_TTL"):
@@ -184,6 +218,7 @@ def _dict_to_backend_config(section: str, data: dict[str, Any]) -> Any:
         "ocr": OCRConfig,
         "detector": DetectorConfig,
         "classifier": ClassifierConfig,
+        "grounding": GroundingConfig,
     }
     cls = mapping.get(section)
     if cls is None:

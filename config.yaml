@@ -59,6 +59,16 @@ backends:
     threshold_default: 0.60
     device: auto
 
+  grounding:
+    enabled: false
+    model_id: IDEA-Research/grounding-dino-tiny
+    prompt_default: "icon . button . checkbox . radio button . toggle . switch . dropdown . combobox . slider . search box . input field . text field . textbox . menu . tab . toolbar . link . image . avatar . badge . dialog . panel ."
+    box_threshold_default: 0.20
+    text_threshold_default: 0.20
+    max_detections: 40
+    include_ocr_context_default: true
+    device: auto
+
 sandbox:
   base_path: /tmp/perception
   ttl_seconds: 3600

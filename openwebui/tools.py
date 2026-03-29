@@ -28,7 +28,7 @@ log.setLevel(logging.INFO)
 
 SIDECAR_URL = os.environ.get("PERCEPTION_SIDECAR_URL", "http://localhost:8200")
 WEBUI_URL = os.environ.get("OPENWEBUI_BASE_URL", "http://localhost:8080")
-EXPECTED_SIDECAR_SCHEMA = "perception-sidecar-2026-03-25"
+EXPECTED_SIDECAR_SCHEMA = "perception-sidecar-2026-03-29"
 
 
 class Tools:
@@ -373,6 +373,83 @@ class Tools:
         except httpx.RequestError as e:
             log.error("Sidecar request failed: %s", e)
             return "Perception sidecar is not reachable. Cannot extract text."
+
+    async def detect_ui_elements(
+        self,
+        name: str,
+        prompt: str = "",
+        box_threshold: float | None = None,
+        text_threshold: float | None = None,
+        max_detections: int | None = None,
+        include_ocr_context: bool | None = None,
+        __metadata__: dict[str, Any] | None = None,
+        __messages__: list[dict[str, Any]] | None = None,
+        __chat_id__: str | None = None,
+        __message_id__: str | None = None,
+    ) -> str:
+        """
+        Detect rough UI elements in a screenshot or interface image.
+
+        Returns open-vocabulary UI proposals such as icons, buttons, inputs,
+        menus, and related controls. This is useful for screenshots or app/web
+        interfaces where the model needs a rough inventory of screen elements.
+
+        :param name: Exact logical filename returned by list_attachments() (e.g. "image_1.jpg"). Do not invent attachment names.
+        :param prompt: Optional grounding prompt override. Leave blank to use the sidecar default UI prompt.
+        :param box_threshold: Optional detector box threshold override.
+        :param text_threshold: Optional detector text threshold override.
+        :param max_detections: Optional cap on returned UI element proposals.
+        :param include_ocr_context: Optional toggle for attaching overlapping OCR snippets to each element.
+        :return: Textual UI grounding result from the perception backend.
+        """
+        session_id, turn_id, scope_source = await _resolve_tool_scope(
+            self.valves.sidecar_url,
+            self.valves.webui_url,
+            __metadata__,
+            __chat_id__,
+            __message_id__,
+            __messages__,
+            logical_name=name,
+        )
+        if not session_id or not turn_id:
+            return "No perception sandbox is active. Cannot detect UI elements."
+
+        log.info(
+            "Perception tools detect_ui_elements called: name=%s session=%s turn=%s scope_source=%s",
+            name,
+            session_id,
+            turn_id,
+            scope_source,
+        )
+
+        try:
+            async with httpx.AsyncClient(timeout=60.0) as client:
+                resp = await client.post(
+                    f"{self.valves.sidecar_url}/ground_ui",
+                    json={
+                        "session_id": session_id,
+                        "turn_id": turn_id,
+                        "logical_name": name,
+                        "prompt": prompt,
+                        "box_threshold": box_threshold,
+                        "text_threshold": text_threshold,
+                        "max_detections": max_detections,
+                        "include_ocr_context": include_ocr_context,
+                    },
+                )
+                if resp.status_code == 200:
+                    data = resp.json()
+                    return data.get("display_text", "No UI grounding result returned.")
+                elif resp.status_code == 404:
+                    return f"Attachment '{name}' not found in the sandbox. Use list_attachments() to see available files."
+                elif resp.status_code == 503:
+                    return "The UI grounding backend is not available. Enable it in the sidecar config to use detect_ui_elements."
+                else:
+                    detail = resp.json().get("detail", resp.text) if resp.headers.get("content-type", "").startswith("application/json") else resp.text
+                    return f"UI grounding failed ({resp.status_code}): {detail}"
+        except httpx.RequestError as e:
+            log.error("Sidecar request failed: %s", e)
+            return "Perception sidecar is not reachable. Cannot detect UI elements."
 
 # ── Helpers ───────────────────────────────────────────────────────────
 
